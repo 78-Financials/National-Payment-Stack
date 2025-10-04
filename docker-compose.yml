@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  nps-service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - NPS_CLIENT_ID=${NPS_CLIENT_ID}
+      - NPS_CLIENT_SECRET=${NPS_CLIENT_SECRET}
+      - NPS_MERCHANT_ID=${NPS_MERCHANT_ID}
+      - NPS_ENCRYPTION_KEY=${NPS_ENCRYPTION_KEY}
+      - NPS_CALLBACK_URL=${NPS_CALLBACK_URL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  # Optional: Add a real database for production
+  # postgres:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_DB: npsdb
+  #     POSTGRES_USER: npsuser
+  #     POSTGRES_PASSWORD: npspass
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+# volumes:
+#   postgres_data:
