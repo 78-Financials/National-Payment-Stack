@@ -40,6 +40,18 @@ public class Pacs028RequestDto {
     @JsonProperty("settlementDate")
     private String settlementDate;
 
+    @JsonProperty("instgAgentMemberId")
+    private String instgAgentMemberId;
+
+    @JsonProperty("instgAgentBicfi")
+    private String instgAgentBicfi;
+
+    @JsonProperty("instdAgentBicfi")
+    private String instdAgentBicfi;
+
+    @JsonProperty("instdAgentMemberId")
+    private String instdAgentMemberId;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -64,4 +76,16 @@ public class Pacs028RequestDto {
 
     public String getSettlementDate() { return settlementDate; }
     public void setSettlementDate(String settlementDate) { this.settlementDate = settlementDate; }
+
+    public String getInstgAgentMemberId() { return instgAgentMemberId; }
+    public void setInstgAgentMemberId(String instgAgentMemberId) { this.instgAgentMemberId = instgAgentMemberId; }
+
+    public String getInstgAgentBicfi() { return instgAgentBicfi; }
+    public void setInstgAgentBicfi(String instgAgentBicfi) { this.instgAgentBicfi = instgAgentBicfi; }
+
+    public String getInstdAgentBicfi() { return instdAgentBicfi; }
+    public void setInstdAgentBicfi(String instdAgentBicfi) { this.instdAgentBicfi = instdAgentBicfi; }
+
+    public String getInstdAgentMemberId() { return instdAgentMemberId; }
+    public void setInstdAgentMemberId(String instdAgentMemberId) { this.instdAgentMemberId = instdAgentMemberId; }
 }

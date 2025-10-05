@@ -100,7 +100,7 @@ public class NpsXmlSignatureService {
             // Build SignedInfo with canonicalization and signature method
             SignedInfo signedInfo = sigFactory.newSignedInfo(
                     sigFactory.newCanonicalizationMethod(
-                            "http://www.w3.org/2001/10/xml-exc-c14n#", // W3C Exclusive C14n
+                            CanonicalizationMethod.EXCLUSIVE, // Use NIBSS-compliant canonicalization method
                             (C14NMethodParameterSpec) null
                     ),
                     sigFactory.newSignatureMethod(SignatureMethod.RSA_SHA256, null),

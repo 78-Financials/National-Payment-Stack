@@ -55,26 +55,22 @@ public class SimplePacs028Service {
     }
 
     private String convertRequestToXml(Pacs028RequestDto request) throws Exception {
-        return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-                "<ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:pacs.028.001.06\">\n" +
+        return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:pacs.028.001.06\">\n" +
                 "    <FIToFIPmtStsReq>\n" +
                 "        <GrpHdr>\n" +
                 "            <MsgId>%s</MsgId>\n" +
                 "            <CreDtTm>%s</CreDtTm>\n" +
                 "            <InstgAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>%s</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstgAgt>\n" +
-                "            <InstdAgt>\n" +
-                "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
-                "                </FinInstnId>\n" +
-                "            </InstdAgt>\n" +
                 "        </GrpHdr>\n" +
                 "        <OrgnlGrpInf>\n" +
                 "            <OrgnlMsgId>%s</OrgnlMsgId>\n" +
-                "            <OrgnlMsgNmId>%s</OrgnlMsgNmId>\n" +
+                "            <OrgnlMsgNmId>pacs.008.001.12</OrgnlMsgNmId>\n" +
                 "            <OrgnlCreDtTm>%s</OrgnlCreDtTm>\n" +
                 "        </OrgnlGrpInf>\n" +
                 "        <TxInf>\n" +
@@ -83,11 +79,17 @@ public class SimplePacs028Service {
                 "            <InstgAgt>\n" +
                 "                <FinInstnId>\n" +
                 "                    <BICFI>%s</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstgAgt>\n" +
                 "            <InstdAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
+                "                    <BICFI>%s</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstdAgt>\n" +
                 "            <OrgnlTxRef>\n" +
@@ -98,13 +100,15 @@ public class SimplePacs028Service {
                 "</ns2:Document>",
                 request.getMessageId(),
                 LocalDateTime.now().toString(),
-                request.getInstitutionCode(),
+                request.getInstgAgentMemberId() != null ? request.getInstgAgentMemberId() : "999057",
                 request.getOriginalMessageId(),
-                request.getOriginalMessageNameId(),
                 request.getOriginalCreationDateTime() != null ? request.getOriginalCreationDateTime().toString() : LocalDateTime.now().toString(),
                 request.getStatusRequestId(),
                 request.getOriginalTransactionId(),
-                request.getInstitutionCode(),
+                request.getInstgAgentBicfi() != null ? request.getInstgAgentBicfi() : "999057",
+                request.getInstgAgentMemberId() != null ? request.getInstgAgentMemberId() : "999057",
+                request.getInstdAgentBicfi() != null ? request.getInstdAgentBicfi() : "999012",
+                request.getInstdAgentMemberId() != null ? request.getInstdAgentMemberId() : "999012",
                 request.getSettlementDate() != null ? request.getSettlementDate() : LocalDateTime.now().toLocalDate().toString());
     }
 
@@ -120,7 +124,7 @@ public class SimplePacs028Service {
         response.setOriginalMessageId(request.getOriginalMessageId());
         response.setResponseCode("00");
         response.setResponseMessage("Payment status request processed successfully");
-        response.setStatus("SUCCESS");
+        response.setStatus("PENDING");
         response.setStatusRequestId(request.getStatusRequestId());
         response.setOriginalTransactionId(request.getOriginalTransactionId());
         response.setProcessedAt(LocalDateTime.now());

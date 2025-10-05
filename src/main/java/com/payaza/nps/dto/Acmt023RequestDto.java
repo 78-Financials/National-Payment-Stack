@@ -43,6 +43,24 @@ public class Acmt023RequestDto {
     @JsonProperty("referenceNumber")
     private String referenceNumber;
 
+    @JsonProperty("creatorBankName")
+    private String creatorBankName;
+
+    @JsonProperty("assignorBankName")
+    private String assignorBankName;
+
+    @JsonProperty("assignorBicfi")
+    private String assignorBicfi;
+
+    @JsonProperty("assignorMemberId")
+    private String assignorMemberId;
+
+    @JsonProperty("assigneeBicfi")
+    private String assigneeBicfi;
+
+    @JsonProperty("assigneeMemberId")
+    private String assigneeMemberId;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -67,4 +85,22 @@ public class Acmt023RequestDto {
 
     public String getReferenceNumber() { return referenceNumber; }
     public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }
+
+    public String getCreatorBankName() { return creatorBankName; }
+    public void setCreatorBankName(String creatorBankName) { this.creatorBankName = creatorBankName; }
+
+    public String getAssignorBankName() { return assignorBankName; }
+    public void setAssignorBankName(String assignorBankName) { this.assignorBankName = assignorBankName; }
+
+    public String getAssignorBicfi() { return assignorBicfi; }
+    public void setAssignorBicfi(String assignorBicfi) { this.assignorBicfi = assignorBicfi; }
+
+    public String getAssignorMemberId() { return assignorMemberId; }
+    public void setAssignorMemberId(String assignorMemberId) { this.assignorMemberId = assignorMemberId; }
+
+    public String getAssigneeBicfi() { return assigneeBicfi; }
+    public void setAssigneeBicfi(String assigneeBicfi) { this.assigneeBicfi = assigneeBicfi; }
+
+    public String getAssigneeMemberId() { return assigneeMemberId; }
+    public void setAssigneeMemberId(String assigneeMemberId) { this.assigneeMemberId = assigneeMemberId; }
 }

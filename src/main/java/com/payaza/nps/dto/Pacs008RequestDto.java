@@ -65,6 +65,39 @@ public class Pacs008RequestDto {
     @JsonProperty("receiverBankCode")
     private String receiverBankCode;
 
+    @JsonProperty("senderBicfi")
+    private String senderBicfi;
+
+    @JsonProperty("senderMemberId")
+    private String senderMemberId;
+
+    @JsonProperty("receiverMemberId")
+    private String receiverMemberId;
+
+    @JsonProperty("instructionId")
+    private String instructionId;
+
+    @JsonProperty("endToEndId")
+    private String endToEndId;
+
+    @JsonProperty("settlementDate")
+    private String settlementDate;
+
+    @JsonProperty("debtorBvn")
+    private String debtorBvn;
+
+    @JsonProperty("creditorBvn")
+    private String creditorBvn;
+
+    @JsonProperty("transactionLocation")
+    private String transactionLocation;
+
+    @JsonProperty("nameEnquiryMsgId")
+    private String nameEnquiryMsgId;
+
+    @JsonProperty("riskRating")
+    private String riskRating;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -107,4 +140,37 @@ public class Pacs008RequestDto {
 
     public String getReceiverBankCode() { return receiverBankCode; }
     public void setReceiverBankCode(String receiverBankCode) { this.receiverBankCode = receiverBankCode; }
+
+    public String getSenderBicfi() { return senderBicfi; }
+    public void setSenderBicfi(String senderBicfi) { this.senderBicfi = senderBicfi; }
+
+    public String getSenderMemberId() { return senderMemberId; }
+    public void setSenderMemberId(String senderMemberId) { this.senderMemberId = senderMemberId; }
+
+    public String getReceiverMemberId() { return receiverMemberId; }
+    public void setReceiverMemberId(String receiverMemberId) { this.receiverMemberId = receiverMemberId; }
+
+    public String getInstructionId() { return instructionId; }
+    public void setInstructionId(String instructionId) { this.instructionId = instructionId; }
+
+    public String getEndToEndId() { return endToEndId; }
+    public void setEndToEndId(String endToEndId) { this.endToEndId = endToEndId; }
+
+    public String getSettlementDate() { return settlementDate; }
+    public void setSettlementDate(String settlementDate) { this.settlementDate = settlementDate; }
+
+    public String getDebtorBvn() { return debtorBvn; }
+    public void setDebtorBvn(String debtorBvn) { this.debtorBvn = debtorBvn; }
+
+    public String getCreditorBvn() { return creditorBvn; }
+    public void setCreditorBvn(String creditorBvn) { this.creditorBvn = creditorBvn; }
+
+    public String getTransactionLocation() { return transactionLocation; }
+    public void setTransactionLocation(String transactionLocation) { this.transactionLocation = transactionLocation; }
+
+    public String getNameEnquiryMsgId() { return nameEnquiryMsgId; }
+    public void setNameEnquiryMsgId(String nameEnquiryMsgId) { this.nameEnquiryMsgId = nameEnquiryMsgId; }
+
+    public String getRiskRating() { return riskRating; }
+    public void setRiskRating(String riskRating) { this.riskRating = riskRating; }
 }

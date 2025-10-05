@@ -63,12 +63,16 @@ public class SimplePacs002Service {
                 "            <CreDtTm>%s</CreDtTm>\n" +
                 "            <InstgAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>%s</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstgAgt>\n" +
                 "            <InstdAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstdAgt>\n" +
                 "        </GrpHdr>\n" +
@@ -79,15 +83,18 @@ public class SimplePacs002Service {
                 "            <GrpSts>%s</GrpSts>\n" +
                 "        </OrgnlGrpInfAndSts>\n" +
                 "        <TxInfAndSts>\n" +
-                "            <StsId>%s</StsId>\n" +
                 "            <InstgAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>%s</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstgAgt>\n" +
                 "            <InstdAgt>\n" +
                 "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
+                "                    <ClrSysMmbId>\n" +
+                "                        <MmbId>%s</MmbId>\n" +
+                "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </InstdAgt>\n" +
                 "            <OrgnlTxRef>\n" +
@@ -98,13 +105,14 @@ public class SimplePacs002Service {
                 "</ns2:Document>",
                 request.getMessageId(),
                 LocalDateTime.now().toString(),
-                request.getInstitutionCode(),
+                request.getInstgAgentMemberId() != null ? request.getInstgAgentMemberId() : "999058",
+                request.getInstdAgentMemberId() != null ? request.getInstdAgentMemberId() : "999057",
                 request.getOriginalMessageId(),
-                LocalDateTime.now().toString(),
+                request.getOriginalCreationDateTime() != null ? request.getOriginalCreationDateTime().toString() : LocalDateTime.now().toString(),
                 request.getStatus(),
-                request.getStatus(),
-                request.getInstitutionCode(),
-                LocalDateTime.now().toLocalDate().toString());
+                request.getInstgAgentMemberId() != null ? request.getInstgAgentMemberId() : "999058",
+                request.getInstdAgentMemberId() != null ? request.getInstdAgentMemberId() : "999057",
+                request.getSettlementDate() != null ? request.getSettlementDate() : LocalDateTime.now().toLocalDate().toString() + "Z");
     }
 
     private String sendToNps(String encryptedXml) throws Exception {
@@ -119,7 +127,7 @@ public class SimplePacs002Service {
         response.setOriginalMessageId(request.getOriginalMessageId());
         response.setResponseCode("00");
         response.setResponseMessage("Payment status report processed successfully");
-        response.setStatus("SUCCESS");
+        response.setStatus("ACTC");
         response.setPaymentStatus(request.getStatus());
         response.setStatusReason(request.getStatusReason());
         response.setStatusReasonCode(request.getStatusReasonCode());

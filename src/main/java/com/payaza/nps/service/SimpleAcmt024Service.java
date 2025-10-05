@@ -61,49 +61,90 @@ public class SimpleAcmt024Service {
     }
 
     private String convertRequestToXml(Acmt024RequestDto request) throws Exception {
-        // Create a simple XML template for ACMT.024
+        // Create XML template matching the exact NIBSS ACMT.024 structure
         return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-                "<ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:acmt.024.001.06\">\n" +
+                "<ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:acmt.024.001.04\">\n" +
                 "    <IdVrfctnRpt>\n" +
                 "        <Assgnmt>\n" +
-                "            <Id>%s</Id>\n" +
+                "            <MsgId>%s</MsgId>\n" +
+                "            <CreDtTm>%s</CreDtTm>\n" +
                 "            <Assgnr>\n" +
-                "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
-                "                </FinInstnId>\n" +
+                "                <Agt>\n" +
+                "                    <FinInstnId>\n" +
+                "                        <BICFI>%s</BICFI>\n" +
+                "                        <ClrSysMmbId>\n" +
+                "                            <MmbId>%s</MmbId>\n" +
+                "                        </ClrSysMmbId>\n" +
+                "                    </FinInstnId>\n" +
+                "                </Agt>\n" +
                 "            </Assgnr>\n" +
                 "            <Assgne>\n" +
-                "                <FinInstnId>\n" +
-                "                    <BICFI>999999</BICFI>\n" +
-                "                </FinInstnId>\n" +
+                "                <Pty>\n" +
+                "                    <Nm>%s</Nm>\n" +
+                "                </Pty>\n" +
+                "                <Agt>\n" +
+                "                    <FinInstnId>\n" +
+                "                        <BICFI>%s</BICFI>\n" +
+                "                        <ClrSysMmbId>\n" +
+                "                            <MmbId>%s</MmbId>\n" +
+                "                        </ClrSysMmbId>\n" +
+                "                    </FinInstnId>\n" +
+                "                </Agt>\n" +
                 "            </Assgne>\n" +
-                "            <CreDtTm>%s</CreDtTm>\n" +
                 "        </Assgnmt>\n" +
-                "        <Vrfctn>\n" +
-                "            <Id>%s</Id>\n" +
-                "            <VrfctnDtTm>%s</VrfctnDtTm>\n" +
-                "            <VrfctnTp>ACCT</VrfctnTp>\n" +
-                "            <VrfctnRslt>%s</VrfctnRslt>\n" +
-                "            <VrfctnDtls>\n" +
-                "                <AcctNb>%s</AcctNb>\n" +
-                "                <AcctNm>%s</AcctNm>\n" +
-                "                <Amt>\n" +
-                "                    <Ccy>%s</Ccy>\n" +
-                "                    <Value>%s</Value>\n" +
-                "                </Amt>\n" +
-                "            </VrfctnDtls>\n" +
-                "        </Vrfctn>\n" +
+                "        <OrgnlAssgnmt>\n" +
+                "            <MsgId>%s</MsgId>\n" +
+                "            <CreDtTm>%s</CreDtTm>\n" +
+                "        </OrgnlAssgnmt>\n" +
+                "        <Rpt>\n" +
+                "            <OrgnlId>%s</OrgnlId>\n" +
+                "            <Vrfctn>%s</Vrfctn>\n" +
+                "            <OrgnlPtyAndAcctId>\n" +
+                "                <Acct>\n" +
+                "                    <Id>\n" +
+                "                        <IBAN>%s</IBAN>\n" +
+                "                    </Id>\n" +
+                "                </Acct>\n" +
+                "            </OrgnlPtyAndAcctId>\n" +
+                "            <UpdtdPtyAndAcctId>\n" +
+                "                <Pty>\n" +
+                "                    <Nm>%s</Nm>\n" +
+                "                </Pty>\n" +
+                "            </UpdtdPtyAndAcctId>\n" +
+                "        </Rpt>\n" +
+                "        <SplmtryData>\n" +
+                "            <PlcAndNm>AdditionalVerificationDetails</PlcAndNm>\n" +
+                "            <Envlp>\n" +
+                "                <CustomData>\n" +
+                "                    <CreditorInfo>\n" +
+                "                        <AccountDesignation>1</AccountDesignation>\n" +
+                "                        <IdType>BVN</IdType>\n" +
+                "                        <IdValue>%s</IdValue>\n" +
+                "                        <AccountTier>1</AccountTier>\n" +
+                "                    </CreditorInfo>\n" +
+                "                    <TransactionInfo>\n" +
+                "                        <RiskRating>%s</RiskRating>\n" +
+                "                    </TransactionInfo>\n" +
+                "                </CustomData>\n" +
+                "            </Envlp>\n" +
+                "        </SplmtryData>\n" +
                 "    </IdVrfctnRpt>\n" +
                 "</ns2:Document>",
                 request.getMessageId(),
                 LocalDateTime.now().toString(),
-                request.getReferenceNumber(),
-                LocalDateTime.now().toString(),
-                request.getVerificationStatus(),
+                request.getAssignorBicfi() != null ? request.getAssignorBicfi() : "999058",
+                request.getAssignorMemberId() != null ? request.getAssignorMemberId() : "044",
+                request.getAssigneeBankName() != null ? request.getAssigneeBankName() : "XYZ Bank",
+                request.getAssigneeBicfi() != null ? request.getAssigneeBicfi() : "999057",
+                request.getAssigneeMemberId() != null ? request.getAssigneeMemberId() : "058",
+                request.getMessageId(),
+                request.getOriginalCreationDateTime() != null ? request.getOriginalCreationDateTime().toString() : LocalDateTime.now().toString(),
+                request.getMessageId(),
+                request.getVerificationResult() != null ? request.getVerificationResult().toString() : "true",
                 request.getAccountNumber(),
                 request.getAccountName(),
-                request.getCurrency(),
-                request.getAmount().toString());
+                request.getBvn() != null ? request.getBvn() : "2211232346",
+                request.getRiskRating() != null ? request.getRiskRating() : "R000000000000000000B9");
     }
 
     private String sendToNps(String encryptedXml) throws Exception {

@@ -50,6 +50,18 @@ public class Pacs002RequestDto {
     @JsonProperty("processedAt")
     private LocalDateTime processedAt;
 
+    @JsonProperty("instgAgentMemberId")
+    private String instgAgentMemberId;
+
+    @JsonProperty("instdAgentMemberId")
+    private String instdAgentMemberId;
+
+    @JsonProperty("originalCreationDateTime")
+    private LocalDateTime originalCreationDateTime;
+
+    @JsonProperty("settlementDate")
+    private String settlementDate;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -83,4 +95,16 @@ public class Pacs002RequestDto {
 
     public LocalDateTime getProcessedAt() { return processedAt; }
     public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }
+
+    public String getInstgAgentMemberId() { return instgAgentMemberId; }
+    public void setInstgAgentMemberId(String instgAgentMemberId) { this.instgAgentMemberId = instgAgentMemberId; }
+
+    public String getInstdAgentMemberId() { return instdAgentMemberId; }
+    public void setInstdAgentMemberId(String instdAgentMemberId) { this.instdAgentMemberId = instdAgentMemberId; }
+
+    public LocalDateTime getOriginalCreationDateTime() { return originalCreationDateTime; }
+    public void setOriginalCreationDateTime(LocalDateTime originalCreationDateTime) { this.originalCreationDateTime = originalCreationDateTime; }
+
+    public String getSettlementDate() { return settlementDate; }
+    public void setSettlementDate(String settlementDate) { this.settlementDate = settlementDate; }
 }

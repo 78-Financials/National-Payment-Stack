@@ -36,6 +36,9 @@ public class Pacs028ResponseDto {
     @JsonProperty("createdAt")
     private LocalDateTime createdAt;
 
+    @JsonProperty("settlementDate")
+    private String settlementDate;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -63,4 +66,7 @@ public class Pacs028ResponseDto {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getSettlementDate() { return settlementDate; }
+    public void setSettlementDate(String settlementDate) { this.settlementDate = settlementDate; }
 }

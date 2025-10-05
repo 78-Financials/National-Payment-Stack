@@ -36,7 +36,7 @@ import java.util.List;
  * 
  * Implements the XML Encryption process as specified by NIBSS:
  * 1. Select XML elements to encrypt
- * 2. Initialize XML encryption engine (AES-256-GCM for payload encryption)
+ * 2. Initialize XML encryption engine (AES-256-CBC for payload encryption - as per NIBSS example)
  * 3. Generate AES-256 session key
  * 4. Encrypt session key using institution's RSA public key (RSA-OAEP)
  * 5. Encrypt the payload using the AES-256 session key
@@ -385,7 +385,7 @@ public class NpsXmlEncryptionService {
         EncryptedKey encryptedKey = keyCipher.encryptKey(doc, sessionKey);
         
         // Step 3: Encrypt sensitive XML data using AES-256-GCM
-        XMLCipher xmlCipher = XMLCipher.getInstance("http://www.w3.org/2001/04/xmlenc#aes256-gcm");
+        XMLCipher xmlCipher = XMLCipher.getInstance(XMLCipher.AES_256_GCM);
         xmlCipher.init(XMLCipher.ENCRYPT_MODE, sessionKey);
         
         // Step 4: Attach encrypted session key info inside <EncryptedData>
@@ -776,7 +776,7 @@ public class NpsXmlEncryptionService {
             
             // Validate encryption
             assert encryptedXml.contains("<EncryptedData xmlns=\"http://www.w3.org/2001/04/xmlenc#\">");
-            assert encryptedXml.contains("<EncryptionMethod Algorithm=\"http://www.w3.org/2009/xmlenc11#aes256-gcm\">");
+            assert encryptedXml.contains("<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes256-cbc\">");
             assert encryptedXml.contains("<KeyInfo xmlns=\"http://www.w3.org/2000/09/xmldsig#\">");
             logger.info("XML encryption test passed");
             

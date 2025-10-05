@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * DTO for ACMT.024 Identification Verification Report
@@ -57,6 +58,33 @@ public class Acmt024RequestDto {
     @JsonProperty("errorMessage")
     private String errorMessage;
 
+    @JsonProperty("assignorBicfi")
+    private String assignorBicfi;
+
+    @JsonProperty("assignorMemberId")
+    private String assignorMemberId;
+
+    @JsonProperty("assigneeBankName")
+    private String assigneeBankName;
+
+    @JsonProperty("assigneeBicfi")
+    private String assigneeBicfi;
+
+    @JsonProperty("assigneeMemberId")
+    private String assigneeMemberId;
+
+    @JsonProperty("originalCreationDateTime")
+    private LocalDateTime originalCreationDateTime;
+
+    @JsonProperty("verificationResult")
+    private Boolean verificationResult;
+
+    @JsonProperty("bvn")
+    private String bvn;
+
+    @JsonProperty("riskRating")
+    private String riskRating;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -93,4 +121,31 @@ public class Acmt024RequestDto {
 
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+
+    public String getAssignorBicfi() { return assignorBicfi; }
+    public void setAssignorBicfi(String assignorBicfi) { this.assignorBicfi = assignorBicfi; }
+
+    public String getAssignorMemberId() { return assignorMemberId; }
+    public void setAssignorMemberId(String assignorMemberId) { this.assignorMemberId = assignorMemberId; }
+
+    public String getAssigneeBankName() { return assigneeBankName; }
+    public void setAssigneeBankName(String assigneeBankName) { this.assigneeBankName = assigneeBankName; }
+
+    public String getAssigneeBicfi() { return assigneeBicfi; }
+    public void setAssigneeBicfi(String assigneeBicfi) { this.assigneeBicfi = assigneeBicfi; }
+
+    public String getAssigneeMemberId() { return assigneeMemberId; }
+    public void setAssigneeMemberId(String assigneeMemberId) { this.assigneeMemberId = assigneeMemberId; }
+
+    public LocalDateTime getOriginalCreationDateTime() { return originalCreationDateTime; }
+    public void setOriginalCreationDateTime(LocalDateTime originalCreationDateTime) { this.originalCreationDateTime = originalCreationDateTime; }
+
+    public Boolean getVerificationResult() { return verificationResult; }
+    public void setVerificationResult(Boolean verificationResult) { this.verificationResult = verificationResult; }
+
+    public String getBvn() { return bvn; }
+    public void setBvn(String bvn) { this.bvn = bvn; }
+
+    public String getRiskRating() { return riskRating; }
+    public void setRiskRating(String riskRating) { this.riskRating = riskRating; }
 }

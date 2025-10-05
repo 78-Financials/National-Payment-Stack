@@ -42,6 +42,28 @@ public class Acmt024ResponseDto {
     @JsonProperty("createdAt")
     private LocalDateTime createdAt;
 
+    @JsonProperty("verificationResult")
+    private Boolean verificationResult;
+
+    @JsonProperty("accountNumber")
+    private String accountNumber;
+
+    // Supplementary Data Fields
+    @JsonProperty("bvn")
+    private String bvn;
+
+    @JsonProperty("riskRating")
+    private String riskRating;
+
+    @JsonProperty("accountDesignation")
+    private String accountDesignation;
+
+    @JsonProperty("accountTier")
+    private String accountTier;
+
+    @JsonProperty("idType")
+    private String idType;
+
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
@@ -75,4 +97,26 @@ public class Acmt024ResponseDto {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getVerificationResult() { return verificationResult; }
+    public void setVerificationResult(Boolean verificationResult) { this.verificationResult = verificationResult; }
+
+    public String getAccountNumber() { return accountNumber; }
+    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+
+    // Supplementary Data Getters and Setters
+    public String getBvn() { return bvn; }
+    public void setBvn(String bvn) { this.bvn = bvn; }
+
+    public String getRiskRating() { return riskRating; }
+    public void setRiskRating(String riskRating) { this.riskRating = riskRating; }
+
+    public String getAccountDesignation() { return accountDesignation; }
+    public void setAccountDesignation(String accountDesignation) { this.accountDesignation = accountDesignation; }
+
+    public String getAccountTier() { return accountTier; }
+    public void setAccountTier(String accountTier) { this.accountTier = accountTier; }
+
+    public String getIdType() { return idType; }
+    public void setIdType(String idType) { this.idType = idType; }
 }
