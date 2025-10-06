@@ -278,4 +278,19 @@ public class InternalClientRegistry {
         stats.put("lastRefresh", LocalDateTime.now().toString());
         return stats;
     }
+    
+    /**
+     * Get client by ID
+     */
+    public InternalClient getClientById(String clientId) {
+        return clientsById.get(clientId);
+    }
+    
+    /**
+     * Check if client is active
+     */
+    public boolean isClientActive(String clientId) {
+        InternalClient client = clientsById.get(clientId);
+        return client != null && client.isActive();
+    }
 }

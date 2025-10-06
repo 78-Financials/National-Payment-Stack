@@ -4,6 +4,7 @@ import com.payaza.nps.annotation.Auditable;
 import com.payaza.nps.model.AuditLog;
 import com.payaza.nps.service.AuditService;
 import com.payaza.nps.service.NpsXmlDecryptionService;
+import com.payaza.nps.service.PaymentStatusTrackingService;
 import com.payaza.nps.service.NpsXmlSignatureService;
 import com.payaza.nps.service.NpsXmlEncryptionService;
 import com.payaza.nps.service.Acmt024XmlParser;
@@ -55,6 +56,9 @@ public class NpsCallbackController {
     private AuditService auditService;
 
     @Autowired
+    private PaymentStatusTrackingService statusTrackingService;
+
+    @Autowired
     private Acmt024XmlParser acmt024XmlParser;
 
     @Autowired
@@ -97,7 +101,7 @@ public class NpsCallbackController {
                     "accountNumber", response.getAccountNumber(),
                     "bankCode", response.getBankCode(),
                     "status", response.getStatus(),
-                    "verified", response.isAccountVerified(),
+                    "verified", response.getAccountVerified(),
                     "responseCode", response.getResponseCode()
                 )
             );
@@ -150,6 +154,22 @@ public class NpsCallbackController {
             // Parse the decrypted XML and extract relevant information
             Pacs002ResponseDto response = pacs002XmlParser.parsePacs002Xml(decryptedXml);
             
+            // Update payment transaction status
+            statusTrackingService.updatePaymentStatus(response.getOriginalMessageId(), response);
+            
+            // Log successful callback processing
+            auditService.logSystemEvent(
+                "PACS002_CALLBACK_PROCESSED",
+                "PaymentStatusReport",
+                "PACS.002 payment status report processed successfully from NIBSS",
+                Map.of(
+                    "originalMessageId", response.getOriginalMessageId(),
+                    "status", response.getStatus(),
+                    "responseCode", response.getResponseCode(),
+                    "responseMessage", response.getResponseMessage()
+                )
+            );
+            
             // Process the payment status result
             processPaymentStatusResult(response);
             
@@ -158,6 +178,20 @@ public class NpsCallbackController {
             
         } catch (Exception e) {
             logger.error("Error processing PACS.002 callback: {}", e.getMessage(), e);
+            
+            // Log callback processing error
+            auditService.logError(
+                "PACS002_CALLBACK_FAILED",
+                "PaymentStatusReport",
+                AuditLog.ActionType.API_CALL,
+                null,
+                "NIBSS",
+                "Failed to process PACS.002 callback from NIBSS: " + e.getMessage(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error processing PACS.002: " + e.getMessage());
         }

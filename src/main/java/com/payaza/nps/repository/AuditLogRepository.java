@@ -107,6 +107,18 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findSlowOperations(@Param("threshold") Long thresholdMs, Pageable pageable);
     
     /**
+     * Count audit logs by timestamp range
+     */
+    @Query("SELECT COUNT(al) FROM AuditLog al WHERE al.timestamp BETWEEN :startTime AND :endTime")
+    Long countByTimestampBetween(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * Count audit logs before a specific timestamp
+     */
+    @Query("SELECT COUNT(al) FROM AuditLog al WHERE al.timestamp < :timestamp")
+    Long countByTimestampBefore(@Param("timestamp") LocalDateTime timestamp);
+    
+    /**
      * Get audit statistics for a date range
      */
     @Query("SELECT a.actionType, COUNT(a) FROM AuditLog a WHERE a.timestamp BETWEEN :start AND :end GROUP BY a.actionType")

@@ -6,6 +6,7 @@ import com.payaza.nps.dto.Pacs008ResponseDto;
 import com.payaza.nps.model.AuditLog;
 import com.payaza.nps.security.ClientContext;
 import com.payaza.nps.service.AuditService;
+import com.payaza.nps.service.PaymentStatusTrackingService;
 import com.payaza.nps.service.SimplePacs008Service;
 import com.payaza.nps.validation.ClientPermissionValidator;
 import com.payaza.nps.validation.TransactionIdValidator;
@@ -40,6 +41,9 @@ public class Pacs008Controller {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private PaymentStatusTrackingService statusTrackingService;
 
     /**
      * Process payment request with client authentication and validation
@@ -89,6 +93,9 @@ public class Pacs008Controller {
             logger.info("PACS.008 payment request completed for client '{}': {} - {}", 
                        clientId, request.getMessageId(), response.getStatus());
             
+            // Track the payment transaction for status monitoring
+            statusTrackingService.trackNewPayment(request, clientId);
+            
             // Log successful payment request
             auditService.logClientAction(
                 "PACS008_TRANSFER", 
@@ -101,8 +108,8 @@ public class Pacs008Controller {
                     "transactionId", request.getTransactionId(),
                     "amount", request.getAmount(),
                     "currency", request.getCurrency(),
-                    "debtorAccount", request.getDebtorAccount(),
-                    "creditorAccount", request.getCreditorAccount(),
+                    "debtorAccount", request.getSenderAccountNumber(),
+                    "creditorAccount", request.getReceiverAccountNumber(),
                     "status", response.getStatus(),
                     "responseCode", response.getResponseCode()
                 )
@@ -112,6 +119,14 @@ public class Pacs008Controller {
             
         } catch (Exception e) {
             logger.error("Error processing PACS.008 payment request for client '{}': {}", clientId, e.getMessage(), e);
+            
+            // Track the failed payment transaction
+            try {
+                statusTrackingService.trackNewPayment(request, clientId);
+                statusTrackingService.markTransactionAsFailed(request.getTransactionId(), e.getMessage(), "SYSTEM_ERROR");
+            } catch (Exception trackingError) {
+                logger.warn("Failed to track error transaction: {}", trackingError.getMessage());
+            }
             
             // Log failed payment request
             auditService.logError(
@@ -128,8 +143,8 @@ public class Pacs008Controller {
                     "transactionId", request.getTransactionId(),
                     "amount", request.getAmount(),
                     "currency", request.getCurrency(),
-                    "debtorAccount", request.getDebtorAccount(),
-                    "creditorAccount", request.getCreditorAccount()
+                    "debtorAccount", request.getSenderAccountNumber(),
+                    "creditorAccount", request.getReceiverAccountNumber()
                 )
             );
             

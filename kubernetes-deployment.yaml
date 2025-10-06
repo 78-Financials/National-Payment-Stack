@@ -1,0 +1,320 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nps-config
+  namespace: nps
+data:
+  application.properties: |
+    # Database Configuration
+    spring.datasource.url=jdbc:postgresql://postgres-service:5432/nps_db
+    spring.datasource.username=nps_user
+    spring.datasource.password=nps_password
+    spring.datasource.driver-class-name=org.postgresql.Driver
+    
+    # JPA/Hibernate Configuration
+    spring.jpa.hibernate.ddl-auto=validate
+    spring.jpa.show-sql=false
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+    
+    # Flyway Configuration
+    spring.flyway.enabled=true
+    spring.flyway.locations=classpath:db/migration
+    spring.flyway.baseline-on-migrate=true
+    
+    # Scheduling Configuration
+    spring.task.scheduling.pool.size=2
+    spring.task.execution.pool.core-size=2
+    spring.task.execution.pool.max-size=4
+    
+    # NPS Configuration
+    nps.base-url=https://nps.nibss-plc.com.ng
+    nps.client-id=${NPS_CLIENT_ID}
+    nps.client-secret=${NPS_CLIENT_SECRET}
+    nps.merchant-id=${NPS_MERCHANT_ID}
+    nps.timeout-seconds=30
+    
+    # Admin Configuration
+    admin.username=admin
+    admin.password=${ADMIN_PASSWORD}
+    admin.default-client-id=ADMIN
+    admin.default-client-name=System Administrator
+    admin.default-api-key=${ADMIN_API_KEY}
+    admin.default-transaction-prefix=ADM
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nps-secrets
+  namespace: nps
+type: Opaque
+data:
+  # Base64 encoded values
+  NPS_CLIENT_ID: eW91ci1ucHMtY2xpZW50LWlk
+  NPS_CLIENT_SECRET: eW91ci1ucHMtY2xpZW50LXNlY3JldA==
+  NPS_MERCHANT_ID: eW91ci1iYW5rLWNvZGU=
+  ADMIN_PASSWORD: YWRtaW4xMjM=
+  ADMIN_API_KEY: YWRtaW5fYXBpX2tleV85OTk5OQ==
+  DATABASE_PASSWORD: bnBzX3Bhc3N3b3Jk
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: nps
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: nps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: nps_db
+        - name: POSTGRES_USER
+          value: nps_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: DATABASE_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: nps
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nps-integration-service
+  namespace: nps
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nps-integration-service
+  template:
+    metadata:
+      labels:
+        app: nps-integration-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+      - name: nps-service
+        image: nps-integration-service:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DATABASE_URL
+          value: "jdbc:postgresql://postgres-service:5432/nps_db"
+        - name: DATABASE_USERNAME
+          value: "nps_user"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: DATABASE_PASSWORD
+        - name: NPS_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: NPS_CLIENT_ID
+        - name: NPS_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: NPS_CLIENT_SECRET
+        - name: NPS_MERCHANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: NPS_MERCHANT_ID
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: ADMIN_PASSWORD
+        - name: ADMIN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nps-secrets
+              key: ADMIN_API_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: nps-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nps-service
+  namespace: nps
+  labels:
+    app: nps-integration-service
+spec:
+  selector:
+    app: nps-integration-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nps-ingress
+  namespace: nps
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  tls:
+  - hosts:
+    - nps.yourdomain.com
+    secretName: nps-tls
+  rules:
+  - host: nps.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nps-service
+            port:
+              number: 8080
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nps-service-monitor
+  namespace: nps
+  labels:
+    app: nps-integration-service
+spec:
+  selector:
+    matchLabels:
+      app: nps-integration-service
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nps-pdb
+  namespace: nps
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: nps-integration-service
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nps-hpa
+  namespace: nps
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nps-integration-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

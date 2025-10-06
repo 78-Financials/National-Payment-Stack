@@ -211,18 +211,35 @@ public class AuditAspect {
             String basePath = mapping != null ? String.join("", mapping.value()) : "";
             
             // Try to find method-level mapping
-            for (Class<?> annotationClass : new Class<?>[]{
-                org.springframework.web.bind.annotation.GetMapping.class,
-                org.springframework.web.bind.annotation.PostMapping.class,
-                org.springframework.web.bind.annotation.PutMapping.class,
-                org.springframework.web.bind.annotation.DeleteMapping.class,
-                org.springframework.web.bind.annotation.PatchMapping.class
-            }) {
-                if (method.isAnnotationPresent(annotationClass)) {
-                    String[] paths = (String[]) method.getAnnotation(annotationClass).getClass().getMethod("value").invoke(method.getAnnotation(annotationClass));
-                    if (paths.length > 0) {
-                        return basePath + paths[0];
-                    }
+            // Check for mapping annotations
+            if (method.isAnnotationPresent(org.springframework.web.bind.annotation.GetMapping.class)) {
+                String[] paths = method.getAnnotation(org.springframework.web.bind.annotation.GetMapping.class).value();
+                if (paths.length > 0) {
+                    return basePath + paths[0];
+                }
+            }
+            if (method.isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class)) {
+                String[] paths = method.getAnnotation(org.springframework.web.bind.annotation.PostMapping.class).value();
+                if (paths.length > 0) {
+                    return basePath + paths[0];
+                }
+            }
+            if (method.isAnnotationPresent(org.springframework.web.bind.annotation.PutMapping.class)) {
+                String[] paths = method.getAnnotation(org.springframework.web.bind.annotation.PutMapping.class).value();
+                if (paths.length > 0) {
+                    return basePath + paths[0];
+                }
+            }
+            if (method.isAnnotationPresent(org.springframework.web.bind.annotation.DeleteMapping.class)) {
+                String[] paths = method.getAnnotation(org.springframework.web.bind.annotation.DeleteMapping.class).value();
+                if (paths.length > 0) {
+                    return basePath + paths[0];
+                }
+            }
+            if (method.isAnnotationPresent(org.springframework.web.bind.annotation.PatchMapping.class)) {
+                String[] paths = method.getAnnotation(org.springframework.web.bind.annotation.PatchMapping.class).value();
+                if (paths.length > 0) {
+                    return basePath + paths[0];
                 }
             }
             
@@ -232,7 +249,7 @@ public class AuditAspect {
         }
     }
 
-    private Object[] getMethodParameters(ProceedingJoinPoint joinPoint) {
+    private Map<String, Object> getMethodParameters(ProceedingJoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         String[] paramNames = ((MethodSignature) joinPoint.getSignature()).getParameterNames();
         
