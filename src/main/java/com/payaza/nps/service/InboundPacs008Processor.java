@@ -2,11 +2,15 @@ package com.payaza.nps.service;
 
 import com.payaza.nps.model.PaymentTransactionLive;
 import com.payaza.nps.model.TransactionDirection;
+import com.payaza.nps.model.Alert;
+import com.payaza.nps.model.AlertSeverity;
+import com.payaza.nps.model.AlertStatus;
 import com.payaza.nps.repository.PaymentTransactionLiveRepository;
 import com.payaza.nps.dto.InboundPacs008Request;
 import com.payaza.nps.dto.InboundPacs008Message;
 import com.payaza.nps.dto.ErrorQueueMessage;
 import com.payaza.nps.dto.NotificationMessage;
+import com.payaza.nps.dto.Pacs008ResponseDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,14 +46,18 @@ public class InboundPacs008Processor {
     @Autowired
     private NotificationService notificationService;
 
-    @Autowired
-    private AlertEngine alertEngine;
 
     @Autowired
     private AuditService auditService;
 
     @Autowired
     private InboundClientSubscriptionService subscriptionService;
+
+    @Autowired
+    private Pacs008XmlParser pacs008XmlParser;
+
+    @Autowired
+    private com.payaza.nps.repository.AlertRepository alertRepository;
 
     // SQS Queue names
     private static final String INBOUND_PACS008_QUEUE = "inbound-pacs008-queue";
@@ -99,11 +107,65 @@ public class InboundPacs008Processor {
     }
 
     /**
-     * Parse inbound PACS.008 XML message
+     * Parse inbound PACS.008 XML message using existing Pacs008XmlParser
      */
     private InboundPacs008Request parseInboundPacs008(String xmlMessage) {
-        // TODO: Implement actual XML parsing using JAXB or similar
-        // This is a placeholder implementation
+        logger.info("Parsing inbound PACS.008 XML message using Pacs008XmlParser");
+        
+        try {
+            // Use existing Pacs008XmlParser to parse the XML
+            Pacs008ResponseDto parsedData = pacs008XmlParser.parsePacs008Xml(xmlMessage);
+            
+            // Map parsed data to InboundPacs008Request
+            InboundPacs008Request request = new InboundPacs008Request();
+            
+            // Set transaction and message identifiers
+            request.setTransactionId(parsedData.getTransactionId());
+            request.setMessageId(parsedData.getMessageId());
+            request.setOriginalTransactionId(parsedData.getTransactionId());
+            request.setOriginalMessageId(parsedData.getMessageId());
+            
+            // Set XML message for reference
+            request.setXmlMessage(xmlMessage);
+            
+            // Set bank codes from agent information
+            request.setSenderBankCode(parsedData.getInstgAgentMemberId());
+            request.setReceiverBankCode(parsedData.getInstdAgentMemberId());
+            
+            // Set account information
+            request.setSenderAccountNumber(parsedData.getSenderAccountNumber());
+            request.setReceiverAccountNumber(parsedData.getReceiverAccountNumber());
+            
+            // Set amount and currency
+            if (parsedData.getAmount() != null) {
+                request.setAmount(parsedData.getAmount().doubleValue());
+            }
+            request.setCurrency(parsedData.getCurrency());
+            
+            // Set narration from remittance information
+            request.setNarration(parsedData.getRemittanceInformation());
+            
+            // Set received timestamp
+            request.setReceivedAt(LocalDateTime.now());
+            
+            logger.info("Successfully parsed inbound PACS.008 - Transaction ID: {}, Message ID: {}, Amount: {} {}", 
+                request.getTransactionId(), request.getMessageId(), request.getAmount(), request.getCurrency());
+            
+            return request;
+            
+        } catch (Exception e) {
+            logger.error("Error parsing inbound PACS.008 XML: {}", e.getMessage(), e);
+            
+            // Fallback to basic parsing if detailed parsing fails
+            return createFallbackRequest(xmlMessage, e);
+        }
+    }
+    
+    /**
+     * Create fallback request when XML parsing fails
+     */
+    private InboundPacs008Request createFallbackRequest(String xmlMessage, Exception parsingError) {
+        logger.warn("Creating fallback request due to parsing error: {}", parsingError.getMessage());
         
         InboundPacs008Request request = new InboundPacs008Request();
         request.setTransactionId("INB-" + UUID.randomUUID().toString().substring(0, 8));
@@ -111,8 +173,9 @@ public class InboundPacs008Processor {
         request.setXmlMessage(xmlMessage);
         request.setSenderBankCode("NIBSS");
         request.setReceiverBankCode("OUR_BANK");
-        request.setAmount(1000.00);
+        request.setAmount(0.0); // Unknown amount
         request.setCurrency("NGN");
+        request.setNarration("Parsing failed: " + parsingError.getMessage());
         request.setReceivedAt(LocalDateTime.now());
         
         return request;
@@ -231,9 +294,8 @@ public class InboundPacs008Processor {
                 updateTransactionErrorStatus(transactionId, e.getMessage());
             }
             
-            // Trigger critical alert
-            // TODO: Implement alert triggering
-            logger.error("Critical alert would be triggered for transaction: {}", transactionId);
+            // Trigger critical alert for processing failure
+            triggerCriticalAlert(transactionId, e.getMessage());
             
             // Log the error
             auditService.logError("INBOUND_PACS008_ERROR", "POST", 
@@ -295,6 +357,88 @@ public class InboundPacs008Processor {
         } catch (Exception e) {
             logger.error("Error sending PACS.002 response: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send PACS.002 response", e);
+        }
+    }
+
+    /**
+     * Trigger critical alert for PACS.008 processing failure
+     */
+    private void triggerCriticalAlert(String transactionId, String errorMessage) {
+        triggerAlert("PACS.008 Processing Failure", 
+            String.format("Critical error processing inbound PACS.008 message for transaction %s: %s", 
+                transactionId != null ? transactionId : "UNKNOWN", errorMessage),
+            AlertSeverity.CRITICAL,
+            "pacs008_processing_failure",
+            transactionId,
+            "INBOUND_PACS008_PROCESSING_ERROR");
+    }
+
+    /**
+     * Trigger alert for queue processing issues
+     */
+    private void triggerQueueAlert(String transactionId, String errorMessage) {
+        triggerAlert("PACS.008 Queue Processing Error", 
+            String.format("Error processing PACS.008 message in queue for transaction %s: %s", 
+                transactionId != null ? transactionId : "UNKNOWN", errorMessage),
+            AlertSeverity.WARNING,
+            "pacs008_queue_error",
+            transactionId,
+            "INBOUND_PACS008_QUEUE_ERROR");
+    }
+
+    /**
+     * Trigger alert for notification failures
+     */
+    private void triggerNotificationAlert(String transactionId, String errorMessage) {
+        triggerAlert("PACS.008 Notification Failure", 
+            String.format("Failed to send notifications for PACS.008 transaction %s: %s", 
+                transactionId != null ? transactionId : "UNKNOWN", errorMessage),
+            AlertSeverity.INFO,
+            "pacs008_notification_failure",
+            transactionId,
+            "INBOUND_PACS008_NOTIFICATION_ERROR");
+    }
+
+    /**
+     * Generic method to trigger alerts for various scenarios
+     */
+    private void triggerAlert(String alertName, String message, AlertSeverity severity, 
+                            String metricName, String transactionId, String errorType) {
+        try {
+            logger.info("Triggering {} alert: {} - Transaction: {}", severity, alertName, transactionId);
+            
+            // Create alert
+            Alert alert = new Alert();
+            alert.setName(alertName);
+            alert.setMessage(message);
+            alert.setSeverity(severity);
+            alert.setStatus(AlertStatus.ACTIVE);
+            alert.setMetricType("ERROR");
+            alert.setMetricName(metricName);
+            alert.setContext(String.format("{\"transactionId\":\"%s\",\"errorType\":\"%s\",\"timestamp\":\"%s\"}", 
+                transactionId != null ? transactionId : "UNKNOWN", errorType, LocalDateTime.now()));
+            
+            // Set notification channels based on severity
+            if (severity == AlertSeverity.CRITICAL) {
+                alert.setNotificationChannels(java.util.List.of("email", "slack", "webhook"));
+            } else if (severity == AlertSeverity.WARNING) {
+                alert.setNotificationChannels(java.util.List.of("email", "slack"));
+            } else {
+                alert.setNotificationChannels(java.util.List.of("email"));
+            }
+            
+            // Save the alert
+            Alert savedAlert = alertRepository.save(alert);
+            
+            // Send notifications
+            notificationService.sendAlert(savedAlert);
+            
+            logger.info("{} alert triggered successfully: {} - Alert ID: {} - Transaction: {}", 
+                severity, alertName, savedAlert.getId(), transactionId);
+            
+        } catch (Exception alertException) {
+            logger.error("Error triggering {} alert for transaction {}: {}", 
+                severity, transactionId, alertException.getMessage(), alertException);
         }
     }
 

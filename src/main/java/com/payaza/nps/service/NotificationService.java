@@ -1,7 +1,6 @@
 package com.payaza.nps.service;
 
 import com.payaza.nps.model.Alert;
-import com.payaza.nps.model.AlertSeverity;
 import com.payaza.nps.model.AlertAction;
 import com.payaza.nps.repository.AlertRepository;
 import org.slf4j.Logger;
@@ -9,8 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +29,12 @@ public class NotificationService {
     
     @Autowired
     private AlertHistoryService alertHistoryService;
+    
+    @Autowired
+    private WebClient webClient;
+    
+    @Autowired
+    private NotificationConfigurationService configService;
     
     private final DateTimeFormatter timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
@@ -99,21 +105,46 @@ public class NotificationService {
     }
     
     /**
-     * Send email notification
+     * Send email notification using custom email API
      */
     private boolean sendEmailNotification(Alert alert) {
         try {
-            // TODO: Implement actual email sending (using JavaMailSender or similar)
             String subject = generateEmailSubject(alert);
             String body = generateEmailBody(alert);
+            String text = generateEmailText(alert);
             
-            logger.info("EMAIL NOTIFICATION: {} - {}", subject, body);
+            // Get configuration from service
+            String emailApiUrl = configService.getEmailApiUrl();
+            String emailApiKey = configService.getEmailApiKey();
+            String emailSender = configService.getEmailSender();
+            String emailRecipients = configService.getEmailRecipients();
             
-            // For now, just log the email - in production, this would send actual email
-            // emailSender.sendEmail(recipients, subject, body);
+            // Prepare email request payload
+            Map<String, Object> emailRequest = new HashMap<>();
+            emailRequest.put("to", List.of(emailRecipients.split(",")));
+            emailRequest.put("message", body);
+            emailRequest.put("text", text);
+            emailRequest.put("subject", subject);
+            emailRequest.put("sender", emailSender);
             
+            logger.info("Sending email notification to: {} with subject: {}", emailRecipients, subject);
+            
+            // Send email via custom API
+            String response = webClient.post()
+                .uri(emailApiUrl)
+                .header("x-api-key", emailApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(emailRequest)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+            
+            logger.info("Email notification sent successfully. Response: {}", response);
             return true;
             
+        } catch (WebClientResponseException e) {
+            logger.error("Error sending email notification - HTTP {}: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            return false;
         } catch (Exception e) {
             logger.error("Error sending email notification: {}", e.getMessage(), e);
             return false;
@@ -142,20 +173,36 @@ public class NotificationService {
     }
     
     /**
-     * Send Slack notification
+     * Send Slack notification via webhook
      */
     private boolean sendSlackNotification(Alert alert) {
         try {
-            // TODO: Implement actual Slack webhook sending
+            String slackWebhookUrl = configService.getSlackWebhookUrl();
+            
+            if (slackWebhookUrl == null || slackWebhookUrl.trim().isEmpty()) {
+                logger.warn("Slack webhook URL not configured, skipping Slack notification");
+                return false;
+            }
+            
             Map<String, Object> slackMessage = generateSlackMessage(alert);
             
-            logger.info("SLACK NOTIFICATION: {}", slackMessage);
+            logger.info("Sending Slack notification to webhook: {}", slackWebhookUrl);
             
-            // For now, just log the Slack message - in production, this would send to Slack
-            // slackService.sendMessage(slackMessage);
+            // Send to Slack webhook
+            String response = webClient.post()
+                .uri(slackWebhookUrl)
+                .header("Content-Type", "application/json")
+                .bodyValue(slackMessage)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
             
+            logger.info("Slack notification sent successfully. Response: {}", response);
             return true;
             
+        } catch (WebClientResponseException e) {
+            logger.error("Error sending Slack notification - HTTP {}: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            return false;
         } catch (Exception e) {
             logger.error("Error sending Slack notification: {}", e.getMessage(), e);
             return false;
@@ -163,23 +210,103 @@ public class NotificationService {
     }
     
     /**
-     * Send webhook notification
+     * Send webhook notification with retry logic
      */
     private boolean sendWebhookNotification(Alert alert) {
         try {
-            // TODO: Implement actual webhook sending
+            String webhookUrl = configService.getWebhookUrl();
+            
+            if (webhookUrl == null || webhookUrl.trim().isEmpty()) {
+                logger.warn("Webhook URL not configured, skipping webhook notification");
+                return false;
+            }
+            
             Map<String, Object> webhookPayload = generateWebhookPayload(alert);
             
-            logger.info("WEBHOOK NOTIFICATION: {}", webhookPayload);
+            logger.info("Sending webhook notification to: {}", webhookUrl);
             
-            // For now, just log the webhook payload - in production, this would send HTTP POST
-            // webhookService.sendWebhook(webhookUrl, webhookPayload);
-            
-            return true;
+            // Send webhook with retry logic
+            return sendWebhookWithRetry(webhookPayload, 1);
             
         } catch (Exception e) {
             logger.error("Error sending webhook notification: {}", e.getMessage(), e);
             return false;
+        }
+    }
+    
+    /**
+     * Send webhook with retry logic
+     */
+    private boolean sendWebhookWithRetry(Map<String, Object> payload, int attempt) {
+        // Get configuration values at method start
+        String webhookUrl = configService.getWebhookUrl();
+        String webhookApiKey = configService.getWebhookApiKey();
+        int maxRetryAttempts = configService.getMaxRetryAttempts();
+        int retryIntervalSeconds = configService.getRetryIntervalSeconds();
+        
+        try {
+            
+            WebClient.RequestBodySpec requestSpec = webClient.post()
+                .uri(webhookUrl)
+                .header("Content-Type", "application/json");
+            
+            // Add API key if configured
+            if (webhookApiKey != null && !webhookApiKey.trim().isEmpty()) {
+                requestSpec.header("x-api-key", webhookApiKey);
+            }
+            
+            String response = requestSpec
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+            
+            logger.info("Webhook notification sent successfully (attempt {}). Response: {}", attempt, response);
+            return true;
+            
+        } catch (WebClientResponseException e) {
+            logger.error("Webhook notification failed (attempt {}) - HTTP {}: {}", 
+                attempt, e.getStatusCode(), e.getResponseBodyAsString());
+            
+            if (attempt < maxRetryAttempts) {
+                logger.info("Retrying webhook notification in {} seconds (attempt {}/{})", 
+                    retryIntervalSeconds, attempt + 1, maxRetryAttempts);
+                
+                // Schedule retry (in a real implementation, you'd use a proper scheduler)
+                try {
+                    Thread.sleep(retryIntervalSeconds * 1000L);
+                    return sendWebhookWithRetry(payload, attempt + 1);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    logger.error("Webhook retry interrupted", ie);
+                    return false;
+                }
+            } else {
+                logger.error("Webhook notification failed after {} attempts, sending to dead letter queue", maxRetryAttempts);
+                // TODO: Send to dead letter queue for permanent failure
+                return false;
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error sending webhook notification (attempt {}): {}", attempt, e.getMessage(), e);
+            
+            if (attempt < maxRetryAttempts) {
+                logger.info("Retrying webhook notification in {} seconds (attempt {}/{})", 
+                    retryIntervalSeconds, attempt + 1, maxRetryAttempts);
+                
+                try {
+                    Thread.sleep(retryIntervalSeconds * 1000L);
+                    return sendWebhookWithRetry(payload, attempt + 1);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    logger.error("Webhook retry interrupted", ie);
+                    return false;
+                }
+            } else {
+                logger.error("Webhook notification failed after {} attempts, sending to dead letter queue", maxRetryAttempts);
+                // TODO: Send to dead letter queue for permanent failure
+                return false;
+            }
         }
     }
     
@@ -194,7 +321,41 @@ public class NotificationService {
     }
     
     /**
-     * Generate email body
+     * Generate email text (plain text version)
+     */
+    private String generateEmailText(Alert alert) {
+        StringBuilder text = new StringBuilder();
+        
+        text.append("Alert Details:\n");
+        text.append("==============\n\n");
+        text.append("Name: ").append(alert.getName()).append("\n");
+        text.append("Severity: ").append(alert.getSeverity().getDisplayName()).append("\n");
+        text.append("Status: ").append(alert.getStatus()).append("\n");
+        text.append("Timestamp: ").append(alert.getCreatedAt().format(timestampFormatter)).append("\n\n");
+        
+        if (alert.getMessage() != null) {
+            text.append("Message: ").append(alert.getMessage()).append("\n\n");
+        }
+        
+        if (alert.getMetricName() != null && alert.getMetricValue() != null) {
+            text.append("Metric Information:\n");
+            text.append("  Metric: ").append(alert.getMetricName()).append("\n");
+            text.append("  Current Value: ").append(String.format("%.2f", alert.getMetricValue())).append("\n");
+            if (alert.getThresholdValue() != null) {
+                text.append("  Threshold: ").append(String.format("%.2f", alert.getThresholdValue())).append("\n");
+            }
+            text.append("\n");
+        }
+        
+        text.append("Please investigate this issue promptly.\n\n");
+        text.append("Best regards,\n");
+        text.append("NPS Alerting System");
+        
+        return text.toString();
+    }
+    
+    /**
+     * Generate email body (HTML version)
      */
     private String generateEmailBody(Alert alert) {
         StringBuilder body = new StringBuilder();

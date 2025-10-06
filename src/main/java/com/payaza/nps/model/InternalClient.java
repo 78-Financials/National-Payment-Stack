@@ -88,6 +88,18 @@ public class InternalClient {
     
     @Column(name = "updated_by", length = 50)
     private String updatedBy = "SYSTEM";
+    
+    @Column(name = "client_type", length = 20)
+    private String clientType = "BANK";
+    
+    @Column(name = "last_activity")
+    private LocalDateTime lastActivity;
+    
+    @Column(name = "password_reset_token", length = 100)
+    private String passwordResetToken;
+    
+    @Column(name = "password_reset_expires")
+    private LocalDateTime passwordResetExpires;
 
     // Constructors
     public InternalClient() {}
@@ -151,8 +163,20 @@ public class InternalClient {
 
     public String getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(String updatedBy) { this.updatedBy = updatedBy; }
-
-    // Utility methods
+    
+    public String getClientType() { return clientType; }
+    public void setClientType(String clientType) { this.clientType = clientType; }
+    
+    public LocalDateTime getLastActivity() { return lastActivity; }
+    public void setLastActivity(LocalDateTime lastActivity) { this.lastActivity = lastActivity; }
+    
+    public String getPasswordResetToken() { return passwordResetToken; }
+    public void setPasswordResetToken(String passwordResetToken) { this.passwordResetToken = passwordResetToken; }
+    
+    public LocalDateTime getPasswordResetExpires() { return passwordResetExpires; }
+    public void setPasswordResetExpires(LocalDateTime passwordResetExpires) { this.passwordResetExpires = passwordResetExpires; }
+    
+    // Helper methods
     public boolean isActive() { 
         return active != null && active; 
     }

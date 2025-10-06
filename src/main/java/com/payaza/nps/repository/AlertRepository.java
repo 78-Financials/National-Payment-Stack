@@ -208,4 +208,14 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
            "FROM Alert a WHERE a.createdAt >= :since " +
            "GROUP BY DATE(a.createdAt), a.severity ORDER BY alertDate DESC")
     List<Object[]> findAlertTrends(@Param("since") LocalDateTime since);
+    
+    /**
+     * Find alerts by metric name containing text with pagination
+     */
+    Page<Alert> findByMetricNameContainingOrderByCreatedAtDesc(String metricName, Pageable pageable);
+    
+    /**
+     * Find all alerts ordered by creation date descending with pagination
+     */
+    Page<Alert> findByOrderByCreatedAtDesc(Pageable pageable);
 }
