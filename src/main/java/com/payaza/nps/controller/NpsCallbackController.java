@@ -1,5 +1,8 @@
 package com.payaza.nps.controller;
 
+import com.payaza.nps.annotation.Auditable;
+import com.payaza.nps.model.AuditLog;
+import com.payaza.nps.service.AuditService;
 import com.payaza.nps.service.NpsXmlDecryptionService;
 import com.payaza.nps.service.NpsXmlSignatureService;
 import com.payaza.nps.service.NpsXmlEncryptionService;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Map;
 
 /**
  * NPS Callback Controller
@@ -48,6 +52,9 @@ public class NpsCallbackController {
     private NpsConfiguration npsConfig;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private Acmt024XmlParser acmt024XmlParser;
 
     @Autowired
@@ -63,6 +70,7 @@ public class NpsCallbackController {
      * Handle incoming ACMT.024 (Identification Verification Report) from NIBSS
      */
     @PostMapping("/acmt024")
+    @Auditable(action = "ACMT024_CALLBACK", resource = "IdentificationReport", actionType = AuditLog.ActionType.API_CALL, message = "ACMT.024 identification verification report callback received from NIBSS")
     public ResponseEntity<String> handleAcmt024Callback(@RequestBody String encryptedXml) {
         logger.info("Received ACMT.024 callback from NIBSS");
         
@@ -79,6 +87,21 @@ public class NpsCallbackController {
             // Parse the decrypted XML and extract relevant information
             Acmt024ResponseDto response = acmt024XmlParser.parseAcmt024Xml(decryptedXml);
             
+            // Log successful callback processing
+            auditService.logSystemEvent(
+                "ACMT024_CALLBACK_PROCESSED",
+                "IdentificationVerification",
+                "ACMT.024 identification verification report processed successfully from NIBSS",
+                Map.of(
+                    "messageId", response.getMessageId(),
+                    "accountNumber", response.getAccountNumber(),
+                    "bankCode", response.getBankCode(),
+                    "status", response.getStatus(),
+                    "verified", response.isAccountVerified(),
+                    "responseCode", response.getResponseCode()
+                )
+            );
+            
             // Process the identification verification result
             processIdentificationVerificationResult(response);
             
@@ -87,6 +110,20 @@ public class NpsCallbackController {
             
         } catch (Exception e) {
             logger.error("Error processing ACMT.024 callback: {}", e.getMessage(), e);
+            
+            // Log callback processing error
+            auditService.logError(
+                "ACMT024_CALLBACK_FAILED",
+                "IdentificationVerification",
+                AuditLog.ActionType.API_CALL,
+                null,
+                "NIBSS",
+                "Failed to process ACMT.024 callback from NIBSS: " + e.getMessage(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error processing ACMT.024: " + e.getMessage());
         }
@@ -96,6 +133,7 @@ public class NpsCallbackController {
      * Handle incoming PACS.002 (Payment Status Report) from NIBSS
      */
     @PostMapping("/pacs002")
+    @Auditable(action = "PACS002_CALLBACK", resource = "PaymentStatusReport", actionType = AuditLog.ActionType.API_CALL, message = "PACS.002 payment status report callback received from NIBSS")
     public ResponseEntity<String> handlePacs002Callback(@RequestBody String encryptedXml) {
         logger.info("Received PACS.002 callback from NIBSS");
         
@@ -129,6 +167,7 @@ public class NpsCallbackController {
      * Handle incoming PACS.028 (Payment Status Request Response) from NIBSS
      */
     @PostMapping("/pacs028")
+    @Auditable(action = "PACS028_CALLBACK", resource = "PaymentStatusRequest", actionType = AuditLog.ActionType.API_CALL, message = "PACS.028 payment status request response callback received from NIBSS")
     public ResponseEntity<String> handlePacs028Callback(@RequestBody String encryptedXml) {
         logger.info("Received PACS.028 callback from NIBSS");
         
@@ -162,6 +201,7 @@ public class NpsCallbackController {
      * Handle incoming PACS.008 (Payment Request Response) from NIBSS
      */
     @PostMapping("/pacs008")
+    @Auditable(action = "PACS008_CALLBACK", resource = "PaymentRequest", actionType = AuditLog.ActionType.API_CALL, message = "PACS.008 payment request callback received from NIBSS")
     public ResponseEntity<String> handlePacs008Callback(@RequestBody String encryptedXml) {
         logger.info("Received PACS.008 callback from NIBSS");
         

@@ -1,66 +1,63 @@
 package com.payaza.nps.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
-import java.util.Map;
 
 /**
- * Data Transfer Object for error responses
+ * Standard error response DTO
  */
 public class ErrorResponseDto {
-
-    private String errorCode;
-    private String errorMessage;
-    private Map<String, String> details;
+    
+    @JsonProperty("error")
+    private String error;
+    
+    @JsonProperty("message")
+    private String message;
+    
+    @JsonProperty("timestamp")
     private LocalDateTime timestamp;
-
+    
+    @JsonProperty("path")
+    private String path;
+    
+    @JsonProperty("clientId")
+    private String clientId;
+    
     // Constructors
     public ErrorResponseDto() {
         this.timestamp = LocalDateTime.now();
     }
-
-    public ErrorResponseDto(String errorCode, String errorMessage) {
+    
+    public ErrorResponseDto(String error, String message) {
         this();
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
+        this.error = error;
+        this.message = message;
     }
-
-    public ErrorResponseDto(String errorCode, String errorMessage, Map<String, String> details, LocalDateTime timestamp) {
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.details = details;
-        this.timestamp = timestamp;
+    
+    public ErrorResponseDto(String error, String message, String path) {
+        this(error, message);
+        this.path = path;
     }
-
+    
+    public ErrorResponseDto(String error, String message, String path, String clientId) {
+        this(error, message, path);
+        this.clientId = clientId;
+    }
+    
     // Getters and Setters
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(String errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public Map<String, String> getDetails() {
-        return details;
-    }
-
-    public void setDetails(Map<String, String> details) {
-        this.details = details;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
+    public String getError() { return error; }
+    public void setError(String error) { this.error = error; }
+    
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    
+    public String getPath() { return path; }
+    public void setPath(String path) { this.path = path; }
+    
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
 }

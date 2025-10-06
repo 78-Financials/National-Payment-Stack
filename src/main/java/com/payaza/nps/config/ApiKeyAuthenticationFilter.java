@@ -1,5 +1,8 @@
 package com.payaza.nps.config;
 
+import com.payaza.nps.model.InternalClient;
+import com.payaza.nps.security.ClientContext;
+import com.payaza.nps.service.InternalClientRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +21,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 /**
- * Filter for API key authentication
+ * Enhanced API key authentication filter for internal clients
  */
 @Component
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
@@ -27,7 +30,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private static final String API_KEY_HEADER = "X-API-Key";
 
     @Autowired
-    private NpsConfiguration npsConfig;
+    private InternalClientRegistry clientRegistry;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 
@@ -35,26 +38,39 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         
         String apiKey = request.getHeader(API_KEY_HEADER);
         
-        if (apiKey != null && isValidApiKey(apiKey)) {
-            // Create authentication token
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                "api-user", 
-                null, 
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_API_USER"))
-            );
+        if (apiKey != null) {
+            InternalClient client = clientRegistry.getClientByApiKey(apiKey);
             
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-            logger.debug("API key authentication successful");
-        } else if (apiKey != null) {
-            logger.warn("Invalid API key provided: {}", apiKey);
+            if (client != null && client.isActive()) {
+                // Set client context for the current request
+                ClientContext.setCurrentClient(client);
+                
+                // Create authentication token with client-specific authority
+                String authority = "ROLE_CLIENT_" + client.getClientId();
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    client.getClientId(), 
+                    null, 
+                    Collections.singletonList(new SimpleGrantedAuthority(authority))
+                );
+                
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                logger.debug("Client authentication successful: {} ({})", client.getClientId(), client.getClientName());
+            } else if (client != null) {
+                logger.warn("Client {} is inactive", client.getClientId());
+                ClientContext.clear();
+            } else {
+                logger.warn("Invalid API key provided: {}", apiKey);
+                ClientContext.clear();
+            }
+        } else {
+            ClientContext.clear();
         }
         
-        filterChain.doFilter(request, response);
-    }
-
-    private boolean isValidApiKey(String apiKey) {
-        // In a real implementation, you would validate against a database or configuration
-        // For now, we'll use the client secret as the API key
-        return npsConfig.getClientSecret() != null && npsConfig.getClientSecret().equals(apiKey);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            // Clean up client context after request
+            ClientContext.clear();
+        }
     }
 }

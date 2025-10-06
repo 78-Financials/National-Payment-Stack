@@ -2,6 +2,7 @@ package com.payaza.nps.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,6 +20,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
@@ -30,14 +32,20 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
                 .requestMatchers("/api/v1/payments/health").permitAll()
-                .requestMatchers("/api/v1/callbacks/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/api/v1/nps/**").permitAll() // NIBSS callbacks
                 
-                // Protected endpoints
-                .requestMatchers("/api/v1/payments/**").authenticated()
+                // Admin endpoints
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                
+                // Client endpoints
+                .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/identification/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
+                
+                // Actuator endpoints
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 
                 // Allow all other requests for now (can be restricted later)
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable());
