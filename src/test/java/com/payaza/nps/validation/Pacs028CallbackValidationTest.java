@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyPair;
@@ -25,8 +26,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * PACS.028 is used to request the status of a previously sent payment instruction
  * or related transaction. The response should be a PACS.002 message.
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.Pacs028XmlParser.class,
+    com.payaza.nps.service.NpsXmlDecryptionService.class
+})
 @ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class Pacs028CallbackValidationTest {
 
     @Autowired

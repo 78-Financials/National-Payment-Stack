@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -329,7 +330,7 @@ public class InternalClientTest {
     @Test
     void testRemoveAllowedEndpoint() {
         // Arrange
-        client.setAllowedEndpoints(Set.of("pacs008", "acmt023"));
+        client.setAllowedEndpoints(new HashSet<>(Set.of("pacs008", "acmt023")));
 
         // Act
         client.removeAllowedEndpoint("pacs008");

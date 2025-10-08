@@ -2,6 +2,7 @@ package com.payaza.nps.service;
 
 import com.payaza.nps.dto.Pacs008RequestDto;
 import com.payaza.nps.dto.Pacs008ResponseDto;
+import com.payaza.nps.config.NpsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import java.security.KeyPair;
 import java.time.LocalDateTime;
 
 /**
- * Simplified Service for handling PACS.008 Payment Request
+ * Simple PACS.008 service for processing payment requests
  */
 @Service
 public class SimplePacs008Service {
@@ -24,7 +25,26 @@ public class SimplePacs008Service {
     @Autowired
     private NpsXmlEncryptionService xmlEncryptionService;
 
-    public Pacs008ResponseDto processPaymentRequest(Pacs008RequestDto request) throws Exception {
+    @Autowired
+    private NpsConfiguration npsConfig;
+
+    @Autowired
+    private NpsApiService npsApiService;
+
+    @Autowired
+    private SharedAlertService sharedAlertService;
+    
+    /**
+     * Process a PACS.008 payment request
+     */
+    public Pacs008ResponseDto processPayment(Pacs008RequestDto request) {
+        return processPaymentRequest(request);
+    }
+    
+    /**
+     * Process a PACS.008 payment request (alternative method name)
+     */
+    public Pacs008ResponseDto processPaymentRequest(Pacs008RequestDto request) {
         logger.info("Processing PACS.008 payment request for message: {}", request.getMessageId());
 
         try {
@@ -44,9 +64,9 @@ public class SimplePacs008Service {
             String encryptedXml = xmlEncryptionService.encryptXmlDocument(signedXml, encryptionKeyPair.getPublic());
             logger.debug("PACS.008 XML message encrypted successfully");
 
-            // Step 5: Send to NPS API (mock implementation)
-            String npsResponse = sendToNps(encryptedXml);
-            logger.info("PACS.008 message sent to NPS successfully");
+            // Step 5: Send to NIBSS API
+            String npsResponse = npsApiService.sendPacs008(encryptedXml);
+            logger.info("PACS.008 message sent to NIBSS successfully");
 
             // Step 6: Convert response to DTO
             Pacs008ResponseDto response = convertResponseToDto(request, npsResponse);
@@ -56,22 +76,25 @@ public class SimplePacs008Service {
 
         } catch (Exception e) {
             logger.error("Error processing PACS.008 payment request: {}", e.getMessage(), e);
-            throw new Exception("Failed to process payment request: " + e.getMessage(), e);
+            
+            // Trigger critical alert for processing failure
+            sharedAlertService.triggerCriticalAlert("PACS008", request.getMessageId(), e.getMessage());
+            
+            throw new RuntimeException("Failed to process payment request: " + e.getMessage(), e);
         }
     }
 
     private String convertRequestToXml(Pacs008RequestDto request) throws Exception {
         // Create XML template matching the exact NIBSS PACS.008 structure
         return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-                "<ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.12\">\n" +
+                "<ns2:Document xmlns:ns2=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08\">\n" +
                 "    <FIToFICstmrCdtTrf>\n" +
                 "        <GrpHdr>\n" +
                 "            <MsgId>%s</MsgId>\n" +
                 "            <CreDtTm>%s</CreDtTm>\n" +
-                "            <BtchBookg>false</BtchBookg>\n" +
                 "            <NbOfTxs>1</NbOfTxs>\n" +
                 "            <SttlmInf>\n" +
-                "                <SttlmMtd>CLRG</SttlmMtd>\n" +
+                "                <SttlmMtd>INDA</SttlmMtd>\n" +
                 "            </SttlmInf>\n" +
                 "            <InstgAgt>\n" +
                 "                <FinInstnId>\n" +
@@ -83,6 +106,7 @@ public class SimplePacs008Service {
                 "            </InstgAgt>\n" +
                 "            <InstdAgt>\n" +
                 "                <FinInstnId>\n" +
+                "                    <BICFI>%s</BICFI>\n" +
                 "                    <ClrSysMmbId>\n" +
                 "                        <MmbId>%s</MmbId>\n" +
                 "                    </ClrSysMmbId>\n" +
@@ -91,112 +115,65 @@ public class SimplePacs008Service {
                 "        </GrpHdr>\n" +
                 "        <CdtTrfTxInf>\n" +
                 "            <PmtId>\n" +
-                "                <InstrId>%s</InstrId>\n" +
-                "                <EndToEndId>%s</EndToEndId>\n" +
                 "                <TxId>%s</TxId>\n" +
+                "                <EndToEndId>%s</EndToEndId>\n" +
                 "            </PmtId>\n" +
-                "            <PmtTpInf>\n" +
-                "                <ClrChanl>RTNS</ClrChanl>\n" +
-                "                <SvcLvl>\n" +
-                "                    <Prtry>0100</Prtry>\n" +
-                "                </SvcLvl>\n" +
-                "                <LclInstrm>\n" +
-                "                    <Prtry>CTAA</Prtry>\n" +
-                "                </LclInstrm>\n" +
-                "                <CtgyPurp>\n" +
-                "                    <Prtry>001</Prtry>\n" +
-                "                </CtgyPurp>\n" +
-                "            </PmtTpInf>\n" +
                 "            <IntrBkSttlmAmt Ccy=\"%s\">%s</IntrBkSttlmAmt>\n" +
-                "            <IntrBkSttlmDt>%s</IntrBkSttlmDt>\n" +
-                "            <ChrgBr>SLEV</ChrgBr>\n" +
-                "            <InstgAgt>\n" +
-                "                <FinInstnId>\n" +
-                "                    <ClrSysMmbId>\n" +
-                "                        <MmbId>%s</MmbId>\n" +
-                "                    </ClrSysMmbId>\n" +
-                "                </FinInstnId>\n" +
-                "            </InstgAgt>\n" +
-                "            <InstdAgt>\n" +
-                "                <FinInstnId>\n" +
-                "                    <ClrSysMmbId>\n" +
-                "                        <MmbId>%s</MmbId>\n" +
-                "                    </ClrSysMmbId>\n" +
-                "                </FinInstnId>\n" +
-                "            </InstdAgt>\n" +
+                "            <ChrgBr>DEBT</ChrgBr>\n" +
                 "            <Dbtr>\n" +
                 "                <Nm>%s</Nm>\n" +
+                "                <Id>\n" +
+                "                    <OrgId>\n" +
+                "                        <Othr>\n" +
+                "                            <Id>%s</Id>\n" +
+                "                        </Othr>\n" +
+                "                    </OrgId>\n" +
+                "                </Id>\n" +
                 "            </Dbtr>\n" +
                 "            <DbtrAcct>\n" +
                 "                <Id>\n" +
-                "                    <IBAN>%s</IBAN>\n" +
+                "                    <Othr>\n" +
+                "                        <Id>%s</Id>\n" +
+                "                    </Othr>\n" +
                 "                </Id>\n" +
-                "                <Nm>%s</Nm>\n" +
                 "            </DbtrAcct>\n" +
                 "            <DbtrAgt>\n" +
                 "                <FinInstnId>\n" +
+                "                    <BICFI>%s</BICFI>\n" +
                 "                    <ClrSysMmbId>\n" +
                 "                        <MmbId>%s</MmbId>\n" +
                 "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </DbtrAgt>\n" +
+                "            <Cdtr>\n" +
+                "                <Nm>%s</Nm>\n" +
+                "                <Id>\n" +
+                "                    <OrgId>\n" +
+                "                        <Othr>\n" +
+                "                            <Id>%s</Id>\n" +
+                "                        </Othr>\n" +
+                "                    </OrgId>\n" +
+                "                </Id>\n" +
+                "            </Cdtr>\n" +
+                "            <CdtrAcct>\n" +
+                "                <Id>\n" +
+                "                    <Othr>\n" +
+                "                        <Id>%s</Id>\n" +
+                "                    </Othr>\n" +
+                "                </Id>\n" +
+                "            </CdtrAcct>\n" +
                 "            <CdtrAgt>\n" +
                 "                <FinInstnId>\n" +
+                "                    <BICFI>%s</BICFI>\n" +
                 "                    <ClrSysMmbId>\n" +
                 "                        <MmbId>%s</MmbId>\n" +
                 "                    </ClrSysMmbId>\n" +
                 "                </FinInstnId>\n" +
                 "            </CdtrAgt>\n" +
-                "            <Cdtr>\n" +
-                "                <Nm>%s</Nm>\n" +
-                "            </Cdtr>\n" +
-                "            <CdtrAcct>\n" +
-                "                <Id>\n" +
-                "                    <IBAN>%s</IBAN>\n" +
-                "                </Id>\n" +
-                "                <Nm>%s</Nm>\n" +
-                "            </CdtrAcct>\n" +
-                "            <InstrForNxtAgt>\n" +
-                "                <InstrInf>/BNF/Beneficiary info</InstrInf>\n" +
-                "            </InstrForNxtAgt>\n" +
-                "            <InstrForNxtAgt>\n" +
-                "                <InstrInf>/SMPL/Sample data</InstrInf>\n" +
-                "            </InstrForNxtAgt>\n" +
                 "            <RmtInf>\n" +
                 "                <Ustrd>%s</Ustrd>\n" +
                 "            </RmtInf>\n" +
                 "        </CdtTrfTxInf>\n" +
-                "        <SplmtryData>\n" +
-                "            <PlcAndNm>AdditionalVerificationDetails</PlcAndNm>\n" +
-                "                <Envlp>\n" +
-                "                    <CustomData>\n" +
-                "                        <DebtorInfo>\n" +
-                "                            <AccountDesignation>1</AccountDesignation>\n" +
-                "                            <IdType>BVN</IdType> \n" +
-                "                            <IdValue>%s</IdValue>\n" +
-                "                            <AccountTier>1</AccountTier>\n" +
-                "                        </DebtorInfo>\n" +
-                "                        <DebtorMetadata>\n" +
-                "                                <!-- <AnyOtherData>1</AnyOtherData > -->\n" +
-                "                        </DebtorMetadata>\n" +
-                "                        <CreditorInfo>\n" +
-                "                            <AccountDesignation>1</AccountDesignation >\n" +
-                "                            <IdType>BVN</IdType>\n" +
-                "                            <IdValue>%s</IdValue>\n" +
-                "                            <AccountTier>1</AccountTier>\n" +
-                "                        </CreditorInfo>\n" +
-                "                        <CreditorMetadata>\n" +
-                "                            <!-- <AnyOtherData>...</AnyOtherData> -->\n" +
-                "                        </CreditorMetadata>\n" +
-                "                        <TransactionInfo>\n" +
-                "                            <TransactionLocation>%s</TransactionLocation>\n" +
-                "                            <NameEnquiryMsgId>%s</NameEnquiryMsgId>\n" +
-                "                            <ChannelCode>1</ChannelCode>\n" +
-                "                            <RiskRating>%s</RiskRating>\n" +
-                "                        </TransactionInfo>\n" +
-                "                    </CustomData>\n" +
-                "                </Envlp>\n" +
-                "        </SplmtryData>\n" +
                 "    </FIToFICstmrCdtTrf>\n" +
                 "</ns2:Document>",
                 request.getMessageId(),
@@ -204,34 +181,22 @@ public class SimplePacs008Service {
                 request.getSenderBicfi() != null ? request.getSenderBicfi() : "999058",
                 request.getSenderMemberId() != null ? request.getSenderMemberId() : "999058",
                 request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
-                request.getInstructionId() != null ? request.getInstructionId() : (request.getSenderMemberId() + request.getReceiverMemberId() + System.currentTimeMillis()),
-                request.getEndToEndId() != null ? request.getEndToEndId() : (request.getSenderMemberId() + request.getReceiverMemberId() + System.currentTimeMillis() + "123"),
+                request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
                 request.getTransactionId(),
-                request.getCurrency(),
-                request.getAmount().toString(),
-                request.getSettlementDate() != null ? request.getSettlementDate() : LocalDateTime.now().toLocalDate().toString() + "Z",
-                request.getSenderMemberId() != null ? request.getSenderMemberId() : "999058",
-                request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
-                request.getSenderAccountName(),
-                request.getSenderAccountNumber(),
-                request.getSenderAccountName(),
-                request.getSenderMemberId() != null ? request.getSenderMemberId() : "999058",
-                request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
-                request.getReceiverAccountName(),
-                request.getReceiverAccountNumber(),
-                request.getReceiverAccountName(),
-                request.getPaymentPurpose() != null ? request.getPaymentPurpose() : "String of 140 chars",
+                request.getEndToEndId() != null ? request.getEndToEndId() : request.getTransactionId(),
+                request.getCurrency() != null ? request.getCurrency() : "NGN",
+                request.getAmount() != null ? request.getAmount().toString() : "0.00",
+                request.getSenderAccountName() != null ? request.getSenderAccountName() : "John Doe",
                 request.getDebtorBvn() != null ? request.getDebtorBvn() : "2211232344",
+                request.getSenderAccountNumber() != null ? request.getSenderAccountNumber() : "1234567890",
+                request.getSenderBicfi() != null ? request.getSenderBicfi() : "999058",
+                request.getSenderMemberId() != null ? request.getSenderMemberId() : "999058",
+                request.getReceiverAccountName() != null ? request.getReceiverAccountName() : "Jane Smith",
                 request.getCreditorBvn() != null ? request.getCreditorBvn() : "2211232346",
-                request.getTransactionLocation() != null ? request.getTransactionLocation() : "01080652440N020900337921E",
-                request.getNameEnquiryMsgId() != null ? request.getNameEnquiryMsgId() : "",
-                request.getRiskRating() != null ? request.getRiskRating() : "R000000000000000000B9");
-    }
-
-    private String sendToNps(String encryptedXml) throws Exception {
-        logger.info("Sending PACS.008 to NPS API (mock implementation)");
-        Thread.sleep(100);
-        return "SUCCESS";
+                request.getReceiverAccountNumber() != null ? request.getReceiverAccountNumber() : "0987654321",
+                request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
+                request.getReceiverMemberId() != null ? request.getReceiverMemberId() : "999057",
+                request.getPaymentPurpose() != null ? request.getPaymentPurpose() : "Payment for services");
     }
 
     private Pacs008ResponseDto convertResponseToDto(Pacs008RequestDto request, String npsResponse) {
@@ -241,11 +206,8 @@ public class SimplePacs008Service {
         response.setResponseCode("00");
         response.setResponseMessage("Payment request processed successfully");
         response.setStatus("PENDING");
-        response.setNpsReference("NPS" + System.currentTimeMillis());
         response.setAmount(request.getAmount());
         response.setCurrency(request.getCurrency());
-        response.setSenderAccountNumber(request.getSenderAccountNumber());
-        response.setReceiverAccountNumber(request.getReceiverAccountNumber());
         response.setProcessedAt(LocalDateTime.now());
         response.setCreatedAt(LocalDateTime.now());
         return response;

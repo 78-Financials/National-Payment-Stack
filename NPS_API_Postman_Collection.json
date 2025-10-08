@@ -1,0 +1,2442 @@
+{
+  "info": {
+    "name": "NPS (Nigerian Payment Stack) API Collection",
+    "description": "Comprehensive API collection for the Nigerian Payment Stack system including all endpoints for payments, authentication, admin management, analytics, alerts, and system monitoring.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.nps.payaza.africa",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "admin_api_key_99999_secure_default",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Authentication and user management endpoints",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"ADMIN\",\n  \"apiKey\": \"{{api_key}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "login"]
+            },
+            "description": "Login with client credentials to get JWT token"
+          },
+          "response": [
+            {
+              "name": "Successful Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"ADMIN\",\n  \"apiKey\": \"admin_api_key_99999_secure_default\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "{{api_version}}", "auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"clientId\": \"ADMIN\",\n  \"clientName\": \"System Administrator\",\n  \"clientType\": \"ADMIN\",\n  \"permissions\": [\"ADMIN_ALL\"],\n  \"expiresAt\": \"2024-01-01T12:00:00Z\",\n  \"refreshToken\": \"refresh_token_here\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "refresh"]
+            },
+            "description": "Refresh JWT token using current token"
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "profile"]
+            },
+            "description": "Get current user profile information"
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientName\": \"Updated Admin Name\",\n  \"email\": \"admin@payaza.africa\",\n  \"phone\": \"+2348012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "profile"]
+            },
+            "description": "Update user profile information"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"current_password\",\n  \"newPassword\": \"new_secure_password\",\n  \"confirmPassword\": \"new_secure_password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "admin@payaza.africa"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "forgot-password"]
+            },
+            "description": "Request password reset"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "token",
+                  "value": "reset_token_here"
+                },
+                {
+                  "key": "newPassword",
+                  "value": "new_password"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "reset-password"]
+            },
+            "description": "Reset password with token"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "logout"]
+            },
+            "description": "Logout current user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Management",
+      "description": "Payment processing and status management endpoints",
+      "item": [
+        {
+          "name": "Initiate Payment (PACS.008)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"BAN-123456789\",\n  \"messageId\": \"MSG-123456789\",\n  \"amount\": \"1000.00\",\n  \"currency\": \"NGN\",\n  \"senderAccountNumber\": \"1234567890\",\n  \"receiverAccountNumber\": \"0987654321\",\n  \"senderBankCode\": \"044\",\n  \"receiverBankCode\": \"058\",\n  \"narration\": \"Payment for services\",\n  \"reference\": \"REF123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/payments/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "payments", "transfer"]
+            },
+            "description": "Initiate payment transfer using PACS.008"
+          },
+          "response": [
+            {
+              "name": "Successful Payment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"transactionId\": \"BAN-123456789\",\n  \"messageId\": \"MSG-123456789\",\n  \"amount\": \"1000.00\",\n  \"currency\": \"NGN\",\n  \"senderAccountNumber\": \"1234567890\",\n  \"receiverAccountNumber\": \"0987654321\",\n  \"senderBankCode\": \"044\",\n  \"receiverBankCode\": \"058\",\n  \"narration\": \"Payment for services\",\n  \"reference\": \"REF123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/payments/transfer",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "{{api_version}}", "payments", "transfer"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"transactionId\": \"BAN-123456789\",\n  \"messageId\": \"MSG-123456789\",\n  \"status\": \"PENDING\",\n  \"responseCode\": \"00\",\n  \"responseMessage\": \"Payment initiated successfully\",\n  \"createdAt\": \"2024-01-01T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Check Payment Status (PACS.028)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalTransactionId\": \"BAN-123456789\",\n  \"originalMessageId\": \"MSG-123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/payments/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "payments", "status"]
+            },
+            "description": "Check payment status using PACS.028"
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/payments/history?page=0&size=20&from=2024-01-01&to=2024-01-31&status=SUCCESS",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "payments", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "status",
+                  "value": "SUCCESS"
+                }
+              ]
+            },
+            "description": "Get payment transaction history with pagination and filters"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Account Verification",
+      "description": "Account verification and identification endpoints",
+      "item": [
+        {
+          "name": "Verify Account (ACMT.023)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountNumber\": \"1234567890\",\n  \"bankCode\": \"044\",\n  \"accountName\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/identification/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "identification", "verify"]
+            },
+            "description": "Verify account details using ACMT.023"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Client Management",
+      "description": "Admin endpoints for managing internal clients",
+      "item": [
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients?page=0&size=20&sortBy=createdAt&sortDir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortDir",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all internal clients with pagination"
+          }
+        },
+        {
+          "name": "Create New Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"BANK001\",\n  \"clientName\": \"Test Bank\",\n  \"transactionPrefix\": \"BAN\",\n  \"allowedEndpoints\": [\"pacs008\", \"pacs028\", \"acmt023\"],\n  \"active\": true,\n  \"rateLimitPerMinute\": 100,\n  \"description\": \"Test bank for development\",\n  \"contactEmail\": \"admin@testbank.com\",\n  \"contactPhone\": \"+2341234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients"]
+            },
+            "description": "Create a new internal client"
+          }
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "1"]
+            },
+            "description": "Get client details by internal ID"
+          }
+        },
+        {
+          "name": "Get Client by Client ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/client/BANK001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "client", "BANK001"]
+            },
+            "description": "Get client details by client ID"
+          }
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"BANK001\",\n  \"clientName\": \"Updated Test Bank\",\n  \"transactionPrefix\": \"BAN\",\n  \"allowedEndpoints\": [\"pacs008\", \"pacs028\", \"acmt023\"],\n  \"active\": true,\n  \"rateLimitPerMinute\": 150,\n  \"description\": \"Updated test bank for development\",\n  \"contactEmail\": \"admin@testbank.com\",\n  \"contactPhone\": \"+2341234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "1"]
+            },
+            "description": "Update client information"
+          }
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "1"]
+            },
+            "description": "Delete a client"
+          }
+        },
+        {
+          "name": "Regenerate API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/1/regenerate-api-key",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "1", "regenerate-api-key"]
+            },
+            "description": "Regenerate API key for a client"
+          }
+        },
+        {
+          "name": "Toggle Client Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/1/toggle-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "1", "toggle-status"]
+            },
+            "description": "Toggle client active/inactive status"
+          }
+        },
+        {
+          "name": "Get Client Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/clients/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "clients", "statistics"]
+            },
+            "description": "Get client statistics summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Analytics & Dashboard",
+      "description": "Analytics and dashboard endpoints for admin users",
+      "item": [
+        {
+          "name": "Get Real-time Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/dashboard/realtime",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "dashboard", "realtime"]
+            },
+            "description": "Get real-time dashboard metrics"
+          }
+        },
+        {
+          "name": "Get Live Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/dashboard/live-transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "dashboard", "live-transactions"]
+            },
+            "description": "Get live transactions for dashboard"
+          }
+        },
+        {
+          "name": "Get Bank Performance Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/dashboard/bank-performance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "dashboard", "bank-performance"]
+            },
+            "description": "Get today's bank performance summary"
+          }
+        },
+        {
+          "name": "Get High-Value Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/transactions/high-value?threshold=100000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "transactions", "high-value"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "100000"
+                }
+              ]
+            },
+            "description": "Get high-value transactions above threshold"
+          }
+        },
+        {
+          "name": "Get Slow Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/transactions/slow?thresholdMs=5000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "transactions", "slow"],
+              "query": [
+                {
+                  "key": "thresholdMs",
+                  "value": "5000"
+                }
+              ]
+            },
+            "description": "Get slow transactions above threshold"
+          }
+        },
+        {
+          "name": "Get Failed Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/transactions/failed?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "transactions", "failed"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get failed transactions with pagination"
+          }
+        },
+        {
+          "name": "Get Client Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/client/BANK001/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "client", "BANK001", "transactions"]
+            },
+            "description": "Get transactions for a specific client"
+          }
+        },
+        {
+          "name": "Get Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/transaction/BAN-123456789",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "transaction", "BAN-123456789"]
+            },
+            "description": "Get detailed transaction information"
+          }
+        },
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/system/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "system", "health"]
+            },
+            "description": "Get system health metrics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Historical Analytics",
+      "description": "Historical analytics and reporting endpoints",
+      "item": [
+        {
+          "name": "Get Volume Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/volume-trends?startDate=2024-01-01&endDate=2024-01-31&period=DAILY",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "volume-trends"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "period",
+                  "value": "DAILY"
+                }
+              ]
+            },
+            "description": "Get transaction volume trends for date range"
+          }
+        },
+        {
+          "name": "Get Bank Performance Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/bank-performance?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "bank-performance"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get historical bank performance analysis"
+          }
+        },
+        {
+          "name": "Get Bank Success Rates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/bank-success-rates?startDate=2024-01-01&endDate=2024-01-31&minTransactions=100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "bank-success-rates"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "minTransactions",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Get bank success rates with minimum transaction filter"
+          }
+        },
+        {
+          "name": "Get Top Performing Banks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/top-performing-banks?startDate=2024-01-01&endDate=2024-01-31&minVolume=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "top-performing-banks"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "minVolume",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Get top performing banks by volume"
+          }
+        },
+        {
+          "name": "Get Client Activity Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/client-activity?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "client-activity"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get client activity analysis for date range"
+          }
+        },
+        {
+          "name": "Get Error Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/error-analysis?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "error-analysis"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get error analysis for date range"
+          }
+        },
+        {
+          "name": "Get Hourly Patterns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/hourly-patterns?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "hourly-patterns"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get hourly transaction patterns"
+          }
+        },
+        {
+          "name": "Get Currency Distribution",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/currency-distribution?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "currency-distribution"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get currency distribution analysis"
+          }
+        },
+        {
+          "name": "Get Amount Distribution",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/amount-distribution?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "amount-distribution"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get amount distribution analysis"
+          }
+        },
+        {
+          "name": "Get Dashboard Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/historical/dashboard-metrics?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "historical", "dashboard-metrics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get comprehensive dashboard metrics for date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - EOD Processing",
+      "description": "End-of-Day processing endpoints",
+      "item": [
+        {
+          "name": "Get EOD Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/eod/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "eod", "status"]
+            },
+            "description": "Get EOD processing status"
+          }
+        },
+        {
+          "name": "Trigger EOD Processing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/analytics/eod/trigger?targetDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "analytics", "eod", "trigger"],
+              "query": [
+                {
+                  "key": "targetDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Manually trigger EOD processing for specific date"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Alert Management",
+      "description": "Alert management and monitoring endpoints",
+      "item": [
+        {
+          "name": "Get All Alert Rules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules"]
+            },
+            "description": "Get all alert rules"
+          }
+        },
+        {
+          "name": "Get Enabled Alert Rules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules/enabled",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules", "enabled"]
+            },
+            "description": "Get only enabled alert rules"
+          }
+        },
+        {
+          "name": "Get Alert Rule by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules", "1"]
+            },
+            "description": "Get specific alert rule by ID"
+          }
+        },
+        {
+          "name": "Create Alert Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"High Transaction Failure Rate\",\n  \"description\": \"Alert when transaction success rate drops below 90%\",\n  \"conditionExpression\": \"transaction_metrics.success_rate < 90\",\n  \"severity\": \"CRITICAL\",\n  \"notificationChannels\": [\"email\", \"slack\", \"sms\"],\n  \"escalationPolicy\": \"immediate\",\n  \"enabled\": true,\n  \"evaluationIntervalSeconds\": 60,\n  \"suppressionWindowSeconds\": 300,\n  \"maxAlertsPerHour\": 10,\n  \"metricType\": \"transaction\",\n  \"metricName\": \"success_rate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules"]
+            },
+            "description": "Create a new alert rule"
+          }
+        },
+        {
+          "name": "Update Alert Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated High Transaction Failure Rate\",\n  \"description\": \"Alert when transaction success rate drops below 85%\",\n  \"conditionExpression\": \"transaction_metrics.success_rate < 85\",\n  \"severity\": \"CRITICAL\",\n  \"notificationChannels\": [\"email\", \"slack\"],\n  \"escalationPolicy\": \"immediate\",\n  \"enabled\": true,\n  \"evaluationIntervalSeconds\": 30,\n  \"suppressionWindowSeconds\": 300,\n  \"maxAlertsPerHour\": 5,\n  \"metricType\": \"transaction\",\n  \"metricName\": \"success_rate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules", "1"]
+            },
+            "description": "Update an existing alert rule"
+          }
+        },
+        {
+          "name": "Delete Alert Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules", "1"]
+            },
+            "description": "Delete an alert rule"
+          }
+        },
+        {
+          "name": "Toggle Alert Rule",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/rules/1/toggle",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "rules", "1", "toggle"]
+            },
+            "description": "Enable/disable an alert rule"
+          }
+        },
+        {
+          "name": "Get All Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts?page=0&size=20&sortBy=createdAt&sortDir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortDir",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Get all alerts with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Active Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "active"]
+            },
+            "description": "Get all active alerts"
+          }
+        },
+        {
+          "name": "Get Alerts by Severity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/severity/CRITICAL",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "severity", "CRITICAL"]
+            },
+            "description": "Get alerts by severity level"
+          }
+        },
+        {
+          "name": "Get Alert by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "1"]
+            },
+            "description": "Get specific alert by ID"
+          }
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/1/acknowledge?acknowledgedBy=admin_user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "1", "acknowledge"],
+              "query": [
+                {
+                  "key": "acknowledgedBy",
+                  "value": "admin_user"
+                }
+              ]
+            },
+            "description": "Acknowledge an alert"
+          }
+        },
+        {
+          "name": "Resolve Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/1/resolve?resolvedBy=admin_user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "1", "resolve"],
+              "query": [
+                {
+                  "key": "resolvedBy",
+                  "value": "admin_user"
+                }
+              ]
+            },
+            "description": "Resolve an alert"
+          }
+        },
+        {
+          "name": "Suppress Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/1/suppress?suppressedBy=admin_user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "1", "suppress"],
+              "query": [
+                {
+                  "key": "suppressedBy",
+                  "value": "admin_user"
+                }
+              ]
+            },
+            "description": "Suppress an alert"
+          }
+        },
+        {
+          "name": "Get Alert History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/1/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "1", "history"]
+            },
+            "description": "Get history for a specific alert"
+          }
+        },
+        {
+          "name": "Get Alert Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/dashboard/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "dashboard", "summary"]
+            },
+            "description": "Get alert dashboard summary"
+          }
+        },
+        {
+          "name": "Get Recent Alert History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/history/recent?hours=24",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "history", "recent"],
+              "query": [
+                {
+                  "key": "hours",
+                  "value": "24"
+                }
+              ]
+            },
+            "description": "Get recent alert history"
+          }
+        },
+        {
+          "name": "Trigger Alert Evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/evaluate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "evaluate"]
+            },
+            "description": "Manually trigger alert evaluation"
+          }
+        },
+        {
+          "name": "Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/alerts/test-notification?channel=email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "alerts", "test-notification"],
+              "query": [
+                {
+                  "key": "channel",
+                  "value": "email"
+                }
+              ]
+            },
+            "description": "Test notification channels"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - System Monitoring",
+      "description": "System monitoring and health check endpoints",
+      "item": [
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "health"]
+            },
+            "description": "Get system health status"
+          }
+        },
+        {
+          "name": "Get System Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "metrics"]
+            },
+            "description": "Get detailed system metrics"
+          }
+        },
+        {
+          "name": "Get Performance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/performance?from=2024-01-01&to=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "performance"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get performance metrics for date range"
+          }
+        },
+        {
+          "name": "Get Database Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/database/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "database", "health"]
+            },
+            "description": "Get database health status"
+          }
+        },
+        {
+          "name": "Get External Services Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/external-services/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "external-services", "health"]
+            },
+            "description": "Get external services health status"
+          }
+        },
+        {
+          "name": "Get System Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/logs?page=0&size=50&level=ERROR",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "logs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "50"
+                },
+                {
+                  "key": "level",
+                  "value": "ERROR"
+                }
+              ]
+            },
+            "description": "Get system logs with pagination and filtering"
+          }
+        },
+        {
+          "name": "Search System Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/logs/search?query=payment&page=0&size=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "logs", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "payment"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Search system logs"
+          }
+        },
+        {
+          "name": "Get Log Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/logs/statistics?from=2024-01-01&to=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "logs", "statistics"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get log statistics for date range"
+          }
+        },
+        {
+          "name": "Export System Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/logs/export?format=csv&level=ERROR",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "logs", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "level",
+                  "value": "ERROR"
+                }
+              ]
+            },
+            "description": "Export system logs in various formats"
+          }
+        },
+        {
+          "name": "Get System Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/alerts?page=0&size=20&severity=WARNING",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "alerts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "severity",
+                  "value": "WARNING"
+                }
+              ]
+            },
+            "description": "Get system alerts with pagination and filtering"
+          }
+        },
+        {
+          "name": "Acknowledge System Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/alerts/1/acknowledge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "alerts", "1", "acknowledge"]
+            },
+            "description": "Acknowledge a system alert"
+          }
+        },
+        {
+          "name": "Get System Configuration",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/configuration",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "configuration"]
+            },
+            "description": "Get system configuration"
+          }
+        },
+        {
+          "name": "Update System Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxConnections\": 200,\n  \"timeoutSeconds\": 60,\n  \"retryAttempts\": 3,\n  \"logLevel\": \"INFO\",\n  \"alertThresholds\": {\n    \"memoryUsage\": 85.0,\n    \"cpuUsage\": 80.0,\n    \"responseTime\": 5.0\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/system/configuration",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "system", "configuration"]
+            },
+            "description": "Update system configuration"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Reports",
+      "description": "Advanced reporting and analytics endpoints",
+      "item": [
+        {
+          "name": "Generate Custom Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"transaction_summary\",\n  \"reportName\": \"Daily Transaction Summary\",\n  \"description\": \"Summary of all transactions for today\",\n  \"fromDate\": \"2024-01-01\",\n  \"toDate\": \"2024-01-31\",\n  \"clientIds\": [\"BANK001\", \"BANK002\"],\n  \"filters\": {\n    \"status\": \"SUCCESS\",\n    \"amountRange\": {\n      \"min\": 1000,\n      \"max\": 10000\n    }\n  },\n  \"groupBy\": \"client\",\n  \"format\": \"json\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "generate"]
+            },
+            "description": "Generate custom report with specified parameters"
+          }
+        },
+        {
+          "name": "Export Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/export/RPT001?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "export", "RPT001"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            },
+            "description": "Export report in various formats (CSV, Excel, PDF, JSON)"
+          }
+        },
+        {
+          "name": "Get Report Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "templates"]
+            },
+            "description": "Get available report templates"
+          }
+        },
+        {
+          "name": "Schedule Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"transaction_summary\",\n  \"reportName\": \"Daily Transaction Summary\",\n  \"schedule\": {\n    \"enabled\": true,\n    \"frequency\": \"DAILY\",\n    \"time\": \"09:00\",\n    \"recipients\": [\"admin@example.com\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "schedule"]
+            },
+            "description": "Schedule automated report generation"
+          }
+        },
+        {
+          "name": "Get Scheduled Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/scheduled",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "scheduled"]
+            },
+            "description": "Get all scheduled reports"
+          }
+        },
+        {
+          "name": "Cancel Scheduled Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/scheduled/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "scheduled", "1"]
+            },
+            "description": "Cancel a scheduled report"
+          }
+        },
+        {
+          "name": "Get Report History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/history?page=0&size=20&from=2024-01-01&to=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get report generation history"
+          }
+        },
+        {
+          "name": "Get Real-time Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/metrics/realtime",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "metrics", "realtime"]
+            },
+            "description": "Get real-time system metrics"
+          }
+        },
+        {
+          "name": "Get Performance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/reports/metrics/performance?from=2024-01-01&to=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "reports", "metrics", "performance"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "Get performance metrics for date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Audit & Compliance",
+      "description": "Audit logs and compliance endpoints",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/audit/logs?page=0&size=50&from=2024-01-01&to=2024-01-31&action=PACS008_INITIATE",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "audit", "logs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "50"
+                },
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "action",
+                  "value": "PACS008_INITIATE"
+                }
+              ]
+            },
+            "description": "Get audit logs with pagination and filtering"
+          }
+        },
+        {
+          "name": "Export Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/audit/logs/export?from=2024-01-01&to=2024-01-31&format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "audit", "logs", "export"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            },
+            "description": "Export audit logs in various formats"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Notification Configuration",
+      "description": "Notification system configuration endpoints",
+      "item": [
+        {
+          "name": "Get Notification Configuration",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config"]
+            },
+            "description": "Get notification system configuration"
+          }
+        },
+        {
+          "name": "Update Email Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipients\": \"admin@payaza.africa,ops@payaza.africa\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config/email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config", "email"]
+            },
+            "description": "Update email notification configuration"
+          }
+        },
+        {
+          "name": "Update Slack Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"webhookUrl\": \"https://hooks.slack.com/services/new_webhook\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config/slack",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config", "slack"]
+            },
+            "description": "Update Slack notification configuration"
+          }
+        },
+        {
+          "name": "Update Webhook Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://new-webhook.site/endpoint\",\n  \"apiKey\": \"new_webhook_api_key\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config", "webhook"]
+            },
+            "description": "Update webhook notification configuration"
+          }
+        },
+        {
+          "name": "Update Retry Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxAttempts\": 5,\n  \"intervalSeconds\": 600\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config/retry",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config", "retry"]
+            },
+            "description": "Update notification retry configuration"
+          }
+        },
+        {
+          "name": "Reset Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/notifications/config/reset",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "notifications", "config", "reset"]
+            },
+            "description": "Reset notification configuration to defaults"
+          }
+        }
+      ]
+    },
+    {
+      "name": "NIBSS Callbacks",
+      "description": "NIBSS callback endpoints for receiving responses",
+      "item": [
+        {
+          "name": "PACS.008 Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08\">\n  <!-- Encrypted XML message from NIBSS -->\n</Document>"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/nps/callback/pacs008",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "nps", "callback", "pacs008"]
+            },
+            "description": "Receive PACS.008 callback from NIBSS"
+          }
+        },
+        {
+          "name": "PACS.002 Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10\">\n  <!-- Encrypted XML message from NIBSS -->\n</Document>"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/nps/callback/pacs002",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "nps", "callback", "pacs002"]
+            },
+            "description": "Receive PACS.002 callback from NIBSS"
+          }
+        },
+        {
+          "name": "ACMT.024 Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:acmt.024.001.02\">\n  <!-- Encrypted XML message from NIBSS -->\n</Document>"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/nps/callback/acmt024",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "nps", "callback", "acmt024"]
+            },
+            "description": "Receive ACMT.024 callback from NIBSS"
+          }
+        },
+        {
+          "name": "PACS.028 Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.028.001.01\">\n  <!-- Encrypted XML message from NIBSS -->\n</Document>"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/nps/callback/pacs028",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "nps", "callback", "pacs028"]
+            },
+            "description": "Receive PACS.028 callback from NIBSS"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -149,8 +149,8 @@ public class SystemController {
      */
     @GetMapping("/logs/statistics")
     public ResponseEntity<Map<String, Object>> getLogStatistics(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to) {
         try {
             Map<String, Object> stats = logAggregationService.getLogStatistics(from, to);
             return ResponseEntity.ok(stats);

@@ -33,11 +33,11 @@ public class InboundClientSubscriptionService {
     @Cacheable(value = "inboundPacs008Subscriber", key = "'current'")
     public String getInboundPacs008Subscriber() {
         try {
-            Optional<InboundClientSubscription> subscription = subscriptionRepository
+            List<InboundClientSubscription> subscriptions = subscriptionRepository
                 .findByMessageTypeAndActiveTrue("INBOUND_PACS008");
             
-            if (subscription.isPresent()) {
-                String clientId = subscription.get().getClientId();
+            if (!subscriptions.isEmpty()) {
+                String clientId = subscriptions.get(0).getClientId();
                 logger.debug("Current inbound PACS.008 subscriber: {}", clientId);
                 return clientId;
             } else {
@@ -143,7 +143,8 @@ public class InboundClientSubscriptionService {
      */
     public Optional<InboundClientSubscription> getCurrentInboundPacs008Subscription() {
         try {
-            return subscriptionRepository.findByMessageTypeAndActiveTrue("INBOUND_PACS008");
+            List<InboundClientSubscription> subscriptions = subscriptionRepository.findByMessageTypeAndActiveTrue("INBOUND_PACS008");
+            return subscriptions.isEmpty() ? Optional.empty() : Optional.of(subscriptions.get(0));
         } catch (Exception e) {
             logger.error("Error retrieving current subscription: {}", e.getMessage(), e);
             return Optional.empty();

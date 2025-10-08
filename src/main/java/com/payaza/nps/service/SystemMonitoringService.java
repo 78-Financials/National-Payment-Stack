@@ -19,8 +19,8 @@ public class SystemMonitoringService {
     @Autowired
     private LogAggregationService logAggregationService;
     
-    @Autowired
-    private HealthCheckService healthCheckService;
+    // @Autowired
+    // private HealthCheckService healthCheckService; // TODO: Implement HealthCheckService
     
     /**
      * Get system health status
@@ -94,6 +94,14 @@ public class SystemMonitoringService {
      */
     public Map<String, Object> getPerformanceMetrics(LocalDateTime from, LocalDateTime to) {
         Map<String, Object> performance = new HashMap<>();
+        
+        // Set default values if null
+        if (from == null) {
+            from = LocalDateTime.now().minusHours(24);
+        }
+        if (to == null) {
+            to = LocalDateTime.now();
+        }
         
         // Response time metrics
         performance.put("averageResponseTime", 2.1);

@@ -1,6 +1,6 @@
 package com.payaza.nps.validation;
 
-import com.payaza.nps.NigerianPaymentStackApplication;
+import com.payaza.nps.config.TestApplicationConfig;
 import com.payaza.nps.service.NpsXmlEncryptionService;
 import com.payaza.nps.service.NpsXmlSignatureService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
@@ -29,8 +30,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * Validation test for pacs.028 Financial Institution to FI Payment Status Request message
  * Tests XML signature and encryption with the exact structure provided by NIBSS
  */
-@SpringBootTest(classes = NigerianPaymentStackApplication.class)
+@SpringBootTest(classes = {
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
 @ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 @ExtendWith(MockitoExtension.class)
 public class Pacs028ValidationTest {
 

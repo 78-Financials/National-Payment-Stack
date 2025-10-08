@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyPair;
@@ -22,8 +23,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests the complete flow of receiving, decrypting, and parsing ACMT.024 messages
  * from NIBSS using the provided sample data.
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.Acmt024XmlParser.class,
+    com.payaza.nps.service.NpsXmlDecryptionService.class
+})
 @ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class Acmt024CallbackValidationTest {
 
     @Autowired

@@ -1,8 +1,11 @@
 package com.payaza.nps.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
@@ -44,16 +47,22 @@ public class Pacs008RequestDto {
     private String receiverAccountName;
 
     @NotNull(message = "Amount is required")
+    @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     @JsonProperty("amount")
     private BigDecimal amount;
 
     @NotBlank(message = "Currency is required")
+    @Size(min = 3, max = 3, message = "Currency must be exactly 3 characters")
+    @Pattern(regexp = "^[A-Z]{3}$", message = "Currency must be a valid 3-letter currency code (e.g., NGN, USD)")
     @JsonProperty("currency")
     private String currency;
 
     @NotBlank(message = "Payment Purpose is required")
     @JsonProperty("paymentPurpose")
     private String paymentPurpose;
+
+    @JsonProperty("narration")
+    private String narration;
 
     @NotBlank(message = "Reference Number is required")
     @JsonProperty("referenceNumber")
@@ -131,6 +140,9 @@ public class Pacs008RequestDto {
 
     public String getPaymentPurpose() { return paymentPurpose; }
     public void setPaymentPurpose(String paymentPurpose) { this.paymentPurpose = paymentPurpose; }
+
+    public String getNarration() { return narration; }
+    public void setNarration(String narration) { this.narration = narration; }
 
     public String getReferenceNumber() { return referenceNumber; }
     public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }

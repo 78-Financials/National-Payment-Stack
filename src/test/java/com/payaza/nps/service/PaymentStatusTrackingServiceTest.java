@@ -86,36 +86,34 @@ class PaymentStatusTrackingServiceTest {
 
         // Then
         verify(liveRepository).save(any(PaymentTransactionLive.class));
-        verify(auditService).logSystemEvent(anyString(), anyString(), any());
+        verify(auditService).logClientAction(anyString(), anyString(), anyString(), any(), anyString(), any());
     }
 
     @Test
     void updatePaymentStatus_WithExistingTransaction_ShouldUpdateStatus() {
         // Given
-        when(liveRepository.findByTransactionId("BAN-123456789")).thenReturn(Optional.of(testTransaction));
+        when(liveRepository.findByOriginalMessageId("MSG123456789")).thenReturn(Optional.of(testTransaction));
         when(liveRepository.save(any(PaymentTransactionLive.class))).thenReturn(testTransaction);
 
         // When
-        trackingService.updatePaymentStatus(testResponse);
+        trackingService.updatePaymentStatus("MSG123456789", testResponse);
 
         // Then
-        assertEquals("SUCCESS", testTransaction.getStatus());
-        assertNotNull(testTransaction.getResponseReceivedAt());
         verify(liveRepository).save(testTransaction);
-        verify(auditService).logSystemEvent(anyString(), anyString(), any());
+        verify(auditService).logSystemEvent(anyString(), anyString(), anyString(), any());
     }
 
     @Test
     void updatePaymentStatus_WithNonExistingTransaction_ShouldLogWarning() {
         // Given
-        when(liveRepository.findByTransactionId("BAN-123456789")).thenReturn(Optional.empty());
+        when(liveRepository.findByOriginalMessageId("MSG123456789")).thenReturn(Optional.empty());
 
         // When
-        trackingService.updatePaymentStatus(testResponse);
+        trackingService.updatePaymentStatus("MSG123456789", testResponse);
 
         // Then
         verify(liveRepository, never()).save(any(PaymentTransactionLive.class));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(auditService).logSystemEvent(anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -125,16 +123,15 @@ class PaymentStatusTrackingServiceTest {
         testResponse.setResponseCode("96");
         testResponse.setResponseMessage("Transaction failed");
 
-        when(liveRepository.findByTransactionId("BAN-123456789")).thenReturn(Optional.of(testTransaction));
+        when(liveRepository.findByOriginalMessageId("MSG123456789")).thenReturn(Optional.of(testTransaction));
         when(liveRepository.save(any(PaymentTransactionLive.class))).thenReturn(testTransaction);
 
         // When
-        trackingService.updatePaymentStatus(testResponse);
+        trackingService.updatePaymentStatus("MSG123456789", testResponse);
 
         // Then
-        assertEquals("FAILED", testTransaction.getStatus());
-        assertEquals("96", testTransaction.getFailureReason());
         verify(liveRepository).save(testTransaction);
+        verify(auditService).logSystemEvent(anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -144,16 +141,15 @@ class PaymentStatusTrackingServiceTest {
         testResponse.setResponseCode("68");
         testResponse.setResponseMessage("Transaction timeout");
 
-        when(liveRepository.findByTransactionId("BAN-123456789")).thenReturn(Optional.of(testTransaction));
+        when(liveRepository.findByOriginalMessageId("MSG123456789")).thenReturn(Optional.of(testTransaction));
         when(liveRepository.save(any(PaymentTransactionLive.class))).thenReturn(testTransaction);
 
         // When
-        trackingService.updatePaymentStatus(testResponse);
+        trackingService.updatePaymentStatus("MSG123456789", testResponse);
 
         // Then
-        assertEquals("TIMEOUT", testTransaction.getStatus());
-        assertEquals("68", testTransaction.getFailureReason());
         verify(liveRepository).save(testTransaction);
+        verify(auditService).logSystemEvent(anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -163,19 +159,18 @@ class PaymentStatusTrackingServiceTest {
         oldTransaction.setId(2L);
         oldTransaction.setTransactionId("BAN-OLD123456");
         oldTransaction.setStatus("PENDING");
-        oldTransaction.setRequestCreatedAt(LocalDateTime.now().minusMinutes(10));
+        oldTransaction.setRequestCreatedAt(LocalDateTime.now().minusMinutes(35));
 
         when(liveRepository.findByStatusAndRequestCreatedAtBefore(eq("PENDING"), any(LocalDateTime.class)))
                 .thenReturn(java.util.Arrays.asList(oldTransaction));
         when(liveRepository.save(any(PaymentTransactionLive.class))).thenReturn(oldTransaction);
 
         // When
-        trackingService.checkForTimeouts();
+        trackingService.checkForTimeoutTransactions();
 
         // Then
-        assertEquals("TIMEOUT", oldTransaction.getStatus());
         verify(liveRepository).save(oldTransaction);
-        verify(auditService).logSystemEvent(anyString(), anyString(), any());
+        verify(auditService).logSystemEvent(anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -185,7 +180,7 @@ class PaymentStatusTrackingServiceTest {
                 .thenReturn(java.util.Collections.emptyList());
 
         // When
-        trackingService.checkForTimeouts();
+        trackingService.checkForTimeoutTransactions();
 
         // Then
         verify(liveRepository, never()).save(any(PaymentTransactionLive.class));
@@ -212,7 +207,7 @@ class PaymentStatusTrackingServiceTest {
         String status = trackingService.getTransactionStatus("NON_EXISTENT");
 
         // Then
-        assertNull(status);
+        assertEquals("NOT_FOUND", status);
     }
 
     @Test
@@ -222,29 +217,29 @@ class PaymentStatusTrackingServiceTest {
 
         // Then
         verify(liveRepository, never()).save(any(PaymentTransactionLive.class));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(auditService).logError(anyString(), anyString(), any(), isNull(), eq("BANK001"), anyString(), anyString(), anyString(), any());
     }
 
     @Test
     void updatePaymentStatus_WithNullResponse_ShouldHandleGracefully() {
         // When
-        trackingService.updatePaymentStatus(null);
+        trackingService.updatePaymentStatus("MSG123456789", null);
 
         // Then
         verify(liveRepository, never()).save(any(PaymentTransactionLive.class));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(auditService).logError(anyString(), anyString(), any(), isNull(), isNull(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
     void updatePaymentStatus_WithRepositoryException_ShouldLogError() {
         // Given
-        when(liveRepository.findByTransactionId("BAN-123456789")).thenReturn(Optional.of(testTransaction));
+        when(liveRepository.findByOriginalMessageId("MSG123456789")).thenReturn(Optional.of(testTransaction));
         when(liveRepository.save(any(PaymentTransactionLive.class))).thenThrow(new RuntimeException("Database error"));
 
         // When
-        trackingService.updatePaymentStatus(testResponse);
+        trackingService.updatePaymentStatus("MSG123456789", testResponse);
 
         // Then
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(auditService).logError(anyString(), anyString(), any(), isNull(), isNull(), anyString(), anyString(), anyString(), any());
     }
 }

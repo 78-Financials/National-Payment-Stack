@@ -1,4 +1,4 @@
-1234package com.payaza.nps.model;
+package com.payaza.nps.model;
 
 /**
  * Enumeration for alert status

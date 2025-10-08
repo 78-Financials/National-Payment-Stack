@@ -58,11 +58,11 @@ public class UserService {
         currentClient.setUpdatedAt(LocalDateTime.now());
         
         // Save updated client
-        InternalClient updatedClient = clientRegistry.updateClient(currentClient);
+        clientRegistry.updateClient(currentClient);
         
         logger.info("User profile updated for client: {}", currentClient.getClientId());
         
-        return convertToUserProfileDto(updatedClient);
+        return convertToUserProfileDto(currentClient);
     }
     
     /**
@@ -152,7 +152,7 @@ public class UserService {
         profile.setClientName(client.getClientName());
         profile.setEmail(client.getContactEmail());
         profile.setPhone(client.getContactPhone());
-        profile.setClientType(client.getClientType().name());
+        profile.setClientType(client.getClientType());
         profile.setActive(client.isActive());
         profile.setLastLogin(client.getLastActivity());
         profile.setCreatedAt(client.getCreatedAt());

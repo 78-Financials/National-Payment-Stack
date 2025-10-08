@@ -1,6 +1,7 @@
 package com.payaza.nps.controller;
 
 import com.payaza.nps.model.InboundClientSubscription;
+import com.payaza.nps.model.AuditLog;
 import com.payaza.nps.service.InboundClientSubscriptionService;
 import com.payaza.nps.service.AuditService;
 import com.payaza.nps.dto.InboundSubscriptionRequestDto;
@@ -80,7 +81,7 @@ public class InboundSubscriptionController {
             // Log admin action
             auditService.logAdminAction("SUBSCRIBE_INBOUND_PACS008", 
                 "Client " + request.getClientId() + " subscribed to inbound PACS.008 notifications", 
-                currentUser);
+                currentUser, AuditLog.ActionType.CREATE, "Client subscription created", request);
             
             logger.info("Client {} subscribed to inbound PACS.008 notifications by {}", 
                 request.getClientId(), currentUser);
@@ -108,7 +109,7 @@ public class InboundSubscriptionController {
             // Log admin action
             auditService.logAdminAction("UNSUBSCRIBE_INBOUND_PACS008", 
                 "Unsubscribed from inbound PACS.008 notifications", 
-                currentUser);
+                currentUser, AuditLog.ActionType.DELETE, "Client subscription removed", null);
             
             logger.info("Unsubscribed from inbound PACS.008 notifications by {}", currentUser);
             

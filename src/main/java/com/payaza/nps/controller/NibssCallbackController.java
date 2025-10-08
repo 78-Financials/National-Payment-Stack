@@ -85,8 +85,7 @@ public class NibssCallbackController {
             // Update transaction status
             paymentStatusTrackingService.updatePaymentStatus(
                 response.getTransactionId(), 
-                response.getStatus(), 
-                response.getResponseMessage()
+                response
             );
             
             // Log the callback

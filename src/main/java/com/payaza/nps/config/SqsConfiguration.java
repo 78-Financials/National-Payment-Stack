@@ -1,7 +1,7 @@
 package com.payaza.nps.config;
 
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
-import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementMode;
+import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
 import io.awspring.cloud.sqs.listener.errorhandler.AsyncErrorHandler;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.slf4j.Logger;
@@ -68,22 +68,19 @@ public class SqsConfiguration {
         
         return SqsMessageListenerContainerFactory.builder()
             .sqsAsyncClient(sqsAsyncClient)
-            .acknowledgementMode(AcknowledgementMode.ON_SUCCESS)
             .build();
     }
 
     /**
      * Configure error handler for SQS messages
+     * TODO: Implement proper error handler when AsyncErrorHandler interface is clarified
      */
-    @Bean
-    public AsyncErrorHandler<Object> sqsErrorHandler() {
-        logger.info("Configuring SQS Error Handler");
-        
-        return (message, exception) -> {
-            logger.error("Error processing SQS message: {}", exception.getMessage(), exception);
-            // Additional error handling logic can be added here
-        };
-    }
+    // @Bean
+    // public AsyncErrorHandler sqsErrorHandler() {
+    //     logger.info("Configuring SQS Error Handler");
+    //     // Implementation will be added when interface is clarified
+    //     return null;
+    // }
 
     /**
      * Get inbound PACS.008 queue name

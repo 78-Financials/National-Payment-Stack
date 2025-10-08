@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
@@ -30,9 +31,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests XML signature and encryption with the exact structure provided by NIBSS
  * Covers all scenarios: Approved, Declined, Timeout (Late Response), Timeout (No Response)
  */
-@SpringBootTest(classes = NigerianPaymentStackApplication.class)
+@SpringBootTest(classes = {
+    com.payaza.nps.service.Pacs002XmlParser.class,
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class Pacs002ValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(Pacs002ValidationTest.class);

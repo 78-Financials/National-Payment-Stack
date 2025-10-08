@@ -1,5 +1,6 @@
 package com.payaza.nps.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,6 +25,9 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    @Autowired
+    private ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -33,13 +38,14 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/v1/payments/health").permitAll()
                 .requestMatchers("/api/v1/nps/**").permitAll() // NIBSS callbacks
+                .requestMatchers("/api/v1/auth/**").permitAll() // Auth endpoints
                 
                 // Admin endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 
                 // Client endpoints
-                .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
-                .requestMatchers("/api/v1/identification/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/identification/**").hasAnyRole("CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
                 
                 // Actuator endpoints
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
@@ -47,6 +53,7 @@ public class SecurityConfig {
                 // Allow all other requests for now (can be restricted later)
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable());
 

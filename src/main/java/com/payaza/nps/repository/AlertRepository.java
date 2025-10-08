@@ -45,6 +45,7 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
      */
     List<Alert> findByAlertRuleIdAndStatus(Long alertRuleId, AlertStatus status);
     
+    
     /**
      * Find alerts created after a specific date
      */
@@ -131,13 +132,13 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     /**
      * Count alerts created today
      */
-    @Query("SELECT COUNT(a) FROM Alert a WHERE DATE(a.createdAt) = CURRENT_DATE")
+    @Query("SELECT COUNT(a) FROM Alert a WHERE a.createdAt >= CURRENT_DATE")
     long countToday();
     
     /**
      * Count alerts created today by severity
      */
-    @Query("SELECT COUNT(a) FROM Alert a WHERE DATE(a.createdAt) = CURRENT_DATE AND a.severity = :severity")
+    @Query("SELECT COUNT(a) FROM Alert a WHERE a.createdAt >= CURRENT_DATE AND a.severity = :severity")
     long countTodayBySeverity(@Param("severity") AlertSeverity severity);
     
     /**
@@ -161,8 +162,8 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
      * Update alert status
      */
     @Modifying
-    @Query("UPDATE Alert a SET a.status = :status, a.updatedAt = :updatedAt WHERE a.id = :id")
-    int updateAlertStatus(@Param("id") Long id, @Param("status") AlertStatus status, @Param("updatedAt") LocalDateTime updatedAt);
+    @Query("UPDATE Alert a SET a.status = :status WHERE a.id = :id")
+    int updateAlertStatus(@Param("id") Long id, @Param("status") AlertStatus status);
     
     /**
      * Acknowledge alert
@@ -204,9 +205,9 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     /**
      * Find recent alert trends (last 7 days)
      */
-    @Query("SELECT DATE(a.createdAt) as alertDate, a.severity, COUNT(a) " +
+    @Query("SELECT a.createdAt as alertDate, a.severity, COUNT(a) " +
            "FROM Alert a WHERE a.createdAt >= :since " +
-           "GROUP BY DATE(a.createdAt), a.severity ORDER BY alertDate DESC")
+           "GROUP BY a.createdAt, a.severity ORDER BY a.createdAt DESC")
     List<Object[]> findAlertTrends(@Param("since") LocalDateTime since);
     
     /**

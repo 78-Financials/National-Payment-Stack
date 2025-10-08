@@ -5,6 +5,8 @@ import com.payaza.nps.service.Pacs008XmlParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +17,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * This test validates that all fields from the PACS.008 XML are correctly
  * extracted and parsed into the Pacs008ResponseDto object.
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.Pacs008XmlParser.class,
+    com.payaza.nps.service.NpsXmlDecryptionService.class
+})
+@ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 @TestPropertySource(properties = {
     "logging.level.com.payaza.nps=DEBUG"
 })

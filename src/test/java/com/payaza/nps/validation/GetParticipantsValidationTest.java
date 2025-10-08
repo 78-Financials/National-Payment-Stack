@@ -1,14 +1,9 @@
 package com.payaza.nps.validation;
 
-import com.payaza.nps.NigerianPaymentStackApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -21,9 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Validation test for Get Participants endpoint
  * Tests the response structure and content validation
  */
-@SpringBootTest(classes = NigerianPaymentStackApplication.class)
-@ActiveProfiles("test")
-@ExtendWith(MockitoExtension.class)
 public class GetParticipantsValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(GetParticipantsValidationTest.class);

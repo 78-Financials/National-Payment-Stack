@@ -119,6 +119,9 @@ public class Alert {
 
     public Long getAlertRuleId() { return alertRuleId; }
     public void setAlertRuleId(Long alertRuleId) { this.alertRuleId = alertRuleId; }
+    
+    // Convenience method for tests
+    public void setRuleId(Long ruleId) { this.alertRuleId = ruleId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

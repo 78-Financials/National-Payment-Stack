@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -21,7 +23,12 @@ import java.security.PublicKey;
  * - RSA-SHA256 signature algorithm
  * - Enveloped signature format
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
+@ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class NibssSignatureValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(NibssSignatureValidationTest.class);

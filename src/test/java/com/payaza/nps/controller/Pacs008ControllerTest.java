@@ -4,18 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payaza.nps.dto.Pacs008RequestDto;
 import com.payaza.nps.dto.Pacs008ResponseDto;
 import com.payaza.nps.security.ClientContext;
+import com.payaza.nps.model.InternalClient;
 import com.payaza.nps.service.AuditService;
 import com.payaza.nps.service.PaymentStatusTrackingService;
 import com.payaza.nps.service.SimplePacs008Service;
 import com.payaza.nps.validation.ClientPermissionValidator;
 import com.payaza.nps.validation.TransactionIdValidator;
+import com.payaza.nps.repository.PaymentTransactionLiveRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 
@@ -27,162 +32,191 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Unit tests for Pacs008Controller
  */
-@WebMvcTest(Pacs008Controller.class)
+@ExtendWith(MockitoExtension.class)
 class Pacs008ControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private SimplePacs008Service pacs008Service;
 
-    @MockBean
+    @Mock
     private ClientPermissionValidator permissionValidator;
 
-    @MockBean
+    @Mock
     private TransactionIdValidator transactionIdValidator;
 
-    @MockBean
+    @Mock
     private AuditService auditService;
 
-    @MockBean
+    @Mock
     private PaymentStatusTrackingService statusTrackingService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Mock
+    private PaymentTransactionLiveRepository paymentTransactionRepository;
 
-    private Pacs008RequestDto validRequest;
-    private Pacs008ResponseDto successResponse;
+    @InjectMocks
+    private Pacs008Controller pacs008Controller;
+
+    private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
+    private Pacs008RequestDto requestDto;
+    private Pacs008ResponseDto responseDto;
 
     @BeforeEach
     void setUp() {
-        // Setup valid request
-        validRequest = new Pacs008RequestDto();
-        validRequest.setMessageId("MSG123456789");
-        validRequest.setTransactionId("BAN-123456789");
-        validRequest.setSenderInstitutionCode("001");
-        validRequest.setReceiverInstitutionCode("002");
-        validRequest.setSenderAccountNumber("1234567890");
-        validRequest.setReceiverAccountNumber("0987654321");
-        validRequest.setSenderAccountName("John Doe");
-        validRequest.setReceiverAccountName("Jane Smith");
-        validRequest.setAmount(new BigDecimal("1000.00"));
-        validRequest.setCurrency("NGN");
-        validRequest.setNarration("Test payment");
+        mockMvc = MockMvcBuilders.standaloneSetup(pacs008Controller).build();
+        objectMapper = new ObjectMapper();
 
-        // Setup success response
-        successResponse = new Pacs008ResponseDto();
-        successResponse.setMessageId("MSG123456789");
-        successResponse.setTransactionId("BAN-123456789");
-        successResponse.setStatus("SUCCESS");
-        successResponse.setResponseCode("00");
-        successResponse.setResponseMessage("Payment processed successfully");
+        // Setup mock client context
+        InternalClient mockClient = new InternalClient();
+        mockClient.setClientId("test-client");
+        mockClient.setTransactionPrefix("TEST");
+        ClientContext.setCurrentClient(mockClient);
 
-        // Setup ClientContext
-        ClientContext.setCurrentClientId("BANK001");
+        // Setup request DTO
+        requestDto = new Pacs008RequestDto();
+        requestDto.setMessageId("MSG123456789");
+        requestDto.setTransactionId("TEST-123456789");
+        requestDto.setSenderInstitutionCode("BANK001");
+        requestDto.setReceiverInstitutionCode("BANK002");
+        requestDto.setSenderAccountNumber("1234567890");
+        requestDto.setReceiverAccountNumber("0987654321");
+        requestDto.setSenderAccountName("John Doe");
+        requestDto.setReceiverAccountName("Jane Smith");
+        requestDto.setAmount(new BigDecimal("1000.00"));
+        requestDto.setCurrency("NGN");
+        requestDto.setPaymentPurpose("Payment for services");
+        requestDto.setNarration("Payment for services");
+        requestDto.setReferenceNumber("REF123456789");
+
+        // Setup response DTO
+        responseDto = new Pacs008ResponseDto();
+        responseDto.setTransactionId("TEST-123456789");
+        responseDto.setStatus("SUCCESS");
+        responseDto.setMessage("Payment processed successfully");
+        responseDto.setAmount(new BigDecimal("1000.00"));
+        responseDto.setCurrency("NGN");
+        responseDto.setResponseCode("00");
+    }
+
+    @AfterEach
+    void tearDown() {
+        ClientContext.clearCurrentClient();
     }
 
     @Test
-    void processPayment_ValidRequest_ShouldReturnSuccess() throws Exception {
+    void processPayment_ShouldProcessPaymentSuccessfully() throws Exception {
         // Given
-        when(permissionValidator.validateClientPermission("BANK001", "PACS008")).thenReturn(true);
-        when(transactionIdValidator.validateTransactionId("BANK001", "BAN-123456789")).thenReturn(true);
-        when(pacs008Service.processPayment(any(Pacs008RequestDto.class))).thenReturn(successResponse);
+        when(permissionValidator.hasPermission("pacs008")).thenReturn(true);
+        when(transactionIdValidator.isValidTransactionId(anyString())).thenReturn(true);
+        when(paymentTransactionRepository.findByTransactionId(anyString())).thenReturn(java.util.Optional.empty());
+        when(pacs008Service.processPaymentRequest(any(Pacs008RequestDto.class))).thenReturn(responseDto);
 
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
-                .header("X-API-Key", "test_api_key")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
+                .accept(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.messageId").value("MSG123456789"))
-                .andExpect(jsonPath("$.transactionId").value("BAN-123456789"))
+                .andExpect(jsonPath("$.transactionId").value("TEST-123456789"))
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.responseCode").value("00"));
+                .andExpect(jsonPath("$.amount").value(1000.00));
 
-        verify(pacs008Service).processPayment(any(Pacs008RequestDto.class));
-        verify(statusTrackingService).trackNewPayment(any(Pacs008RequestDto.class), eq("BANK001"));
-        verify(auditService).logApiCall(anyString(), anyString(), anyString(), any());
+        verify(permissionValidator).hasPermission("pacs008");
+        verify(transactionIdValidator).isValidTransactionId(anyString());
+        verify(paymentTransactionRepository).findByTransactionId(anyString());
+        verify(pacs008Service).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 
     @Test
-    void processPayment_InvalidClientPermission_ShouldReturn403() throws Exception {
+    void processPayment_InvalidPermission_ShouldReturn400() throws Exception {
         // Given
-        when(permissionValidator.validateClientPermission("BANK001", "PACS008")).thenReturn(false);
+        when(permissionValidator.hasPermission("pacs008")).thenReturn(false);
 
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
-                .header("X-API-Key", "test_api_key")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isForbidden());
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
 
-        verify(pacs008Service, never()).processPayment(any(Pacs008RequestDto.class));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(permissionValidator).hasPermission("pacs008");
+        verify(transactionIdValidator, never()).isValidTransactionId(anyString());
+        verify(paymentTransactionRepository, never()).findByTransactionId(anyString());
+        verify(pacs008Service, never()).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 
     @Test
     void processPayment_InvalidTransactionId_ShouldReturn400() throws Exception {
         // Given
-        validRequest.setTransactionId("INVALID-123456789");
-        when(permissionValidator.validateClientPermission("BANK001", "PACS008")).thenReturn(true);
-        when(transactionIdValidator.validateTransactionId("BANK001", "INVALID-123456789")).thenReturn(false);
+        when(permissionValidator.hasPermission("pacs008")).thenReturn(true);
+        when(transactionIdValidator.isValidTransactionId(anyString())).thenReturn(false);
 
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
-                .header("X-API-Key", "test_api_key")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
+                .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isBadRequest());
 
-        verify(pacs008Service, never()).processPayment(any(Pacs008RequestDto.class));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(permissionValidator).hasPermission("pacs008");
+        verify(transactionIdValidator).isValidTransactionId(anyString());
+        verify(paymentTransactionRepository, never()).findByTransactionId(anyString());
+        verify(pacs008Service, never()).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 
     @Test
     void processPayment_ServiceException_ShouldReturn500() throws Exception {
         // Given
-        when(permissionValidator.validateClientPermission("BANK001", "PACS008")).thenReturn(true);
-        when(transactionIdValidator.validateTransactionId("BANK001", "BAN-123456789")).thenReturn(true);
-        when(pacs008Service.processPayment(any(Pacs008RequestDto.class)))
+        when(permissionValidator.hasPermission("pacs008")).thenReturn(true);
+        when(transactionIdValidator.isValidTransactionId(anyString())).thenReturn(true);
+        when(paymentTransactionRepository.findByTransactionId(anyString())).thenReturn(java.util.Optional.empty());
+        when(pacs008Service.processPaymentRequest(any(Pacs008RequestDto.class)))
                 .thenThrow(new RuntimeException("Service error"));
 
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
-                .header("X-API-Key", "test_api_key")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value("ERROR"))
-                .andExpect(jsonPath("$.responseMessage").exists());
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isInternalServerError());
 
-        verify(statusTrackingService).trackNewPayment(any(Pacs008RequestDto.class), eq("BANK001"));
-        verify(auditService).logError(anyString(), anyString(), any(), any());
+        verify(permissionValidator).hasPermission("pacs008");
+        verify(transactionIdValidator).isValidTransactionId(anyString());
+        verify(paymentTransactionRepository).findByTransactionId(anyString());
+        verify(pacs008Service).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 
     @Test
-    void processPayment_MissingRequiredFields_ShouldReturn400() throws Exception {
-        // Given
+    void processPayment_InvalidRequest_ShouldReturn400() throws Exception {
+        // Given - Create invalid request (missing required fields)
         Pacs008RequestDto invalidRequest = new Pacs008RequestDto();
-        invalidRequest.setMessageId("MSG123456789");
-        // Missing transactionId, amount, etc.
+        invalidRequest.setTransactionId(""); // Empty transaction ID
 
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
-                .header("X-API-Key", "test_api_key")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(pacs008Service, never()).processPayment(any(Pacs008RequestDto.class));
+        verify(permissionValidator, never()).hasPermission(anyString());
+        verify(transactionIdValidator, never()).isValidTransactionId(anyString());
+        verify(pacs008Service, never()).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 
     @Test
-    void processPayment_MissingApiKey_ShouldReturn401() throws Exception {
+    void processPayment_WithClientContext_ShouldUseClientInfo() throws Exception {
+        // Given
+        when(permissionValidator.hasPermission("pacs008")).thenReturn(true);
+        when(transactionIdValidator.isValidTransactionId(anyString())).thenReturn(true);
+        when(paymentTransactionRepository.findByTransactionId(anyString())).thenReturn(java.util.Optional.empty());
+        when(pacs008Service.processPaymentRequest(any(Pacs008RequestDto.class))).thenReturn(responseDto);
+
         // When & Then
         mockMvc.perform(post("/api/v1/payments/transfer")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isUnauthorized());
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk());
+
+        verify(permissionValidator).hasPermission("pacs008");
+        verify(transactionIdValidator).isValidTransactionId(anyString());
+        verify(paymentTransactionRepository).findByTransactionId(anyString());
+        verify(pacs008Service).processPaymentRequest(any(Pacs008RequestDto.class));
     }
 }

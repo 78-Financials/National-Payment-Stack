@@ -1,6 +1,7 @@
 package com.payaza.nps.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -63,12 +64,16 @@ public class InternalClient {
     @Column(name = "rate_limit_per_minute", nullable = false)
     private Integer rateLimitPerMinute = 100;
     
+    @Size(max = 500, message = "Description must not exceed 500 characters")
     @Column(name = "description", length = 500)
     private String description;
     
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Contact email must not exceed 100 characters")
     @Column(name = "contact_email", length = 100)
     private String contactEmail;
     
+    @Size(max = 20, message = "Contact phone must not exceed 20 characters")
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
     
@@ -139,6 +144,9 @@ public class InternalClient {
 
     public Integer getRateLimitPerMinute() { return rateLimitPerMinute; }
     public void setRateLimitPerMinute(Integer rateLimitPerMinute) { this.rateLimitPerMinute = rateLimitPerMinute; }
+    
+    // Convenience method for tests
+    public void setRateLimit(int rateLimit) { this.rateLimitPerMinute = rateLimit; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -195,7 +203,7 @@ public class InternalClient {
     }
 
     public boolean hasEndpointAccess(String endpoint) {
-        return this.allowedEndpoints != null && this.allowedEndpoints.contains(endpoint);
+        return this.allowedEndpoints != null && endpoint != null && this.allowedEndpoints.contains(endpoint);
     }
 
     public boolean hasPermission(String endpoint) {

@@ -38,4 +38,29 @@ public class ClientContext {
         InternalClient client = getCurrentClient();
         return client != null ? client.getClientId() : null;
     }
+    
+    /**
+     * Get current client prefix
+     */
+    public static String getCurrentClientPrefix() {
+        InternalClient client = getCurrentClient();
+        return client != null ? client.getTransactionPrefix() : null;
+    }
+    
+    /**
+     * Clear current client (alias for clearCurrentClient)
+     */
+    public static void clear() {
+        clearCurrentClient();
+    }
+    
+    /**
+     * Set current client ID (convenience method for tests)
+     */
+    public static void setCurrentClientId(String clientId) {
+        // For tests, we'll create a minimal client object
+        InternalClient client = new InternalClient();
+        client.setClientId(clientId);
+        setCurrentClient(client);
+    }
 }

@@ -111,7 +111,7 @@ public class AuthService {
     /**
      * Get client permissions based on client type
      */
-    private List<String> getClientPermissions(InternalClient client) {
+    public List<String> getClientPermissions(InternalClient client) {
         String clientType = client.getClientType();
         if (clientType == null) {
             clientType = "BANK";

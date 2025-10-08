@@ -219,6 +219,18 @@ public class PaymentTransactionLive {
 
     public String getErrorDetails() { return errorDetails; }
     public void setErrorDetails(String errorDetails) { this.errorDetails = errorDetails; }
+    
+    // Convenience method for tests
+    public String getFailureReason() {
+        if (errorCategory != null && errorDetails != null) {
+            return errorCategory + ": " + errorDetails;
+        } else if (errorDetails != null) {
+            return errorDetails;
+        } else if (errorCategory != null) {
+            return errorCategory;
+        }
+        return responseMessage != null ? responseMessage : "Unknown failure";
+    }
 
     // New field getters and setters
     public TransactionDirection getDirection() { return direction; }

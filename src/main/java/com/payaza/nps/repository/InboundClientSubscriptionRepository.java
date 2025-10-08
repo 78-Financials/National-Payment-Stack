@@ -16,9 +16,9 @@ import java.util.Optional;
 public interface InboundClientSubscriptionRepository extends JpaRepository<InboundClientSubscription, Long> {
 
     /**
-     * Find active subscription for a specific message type
+     * Find active subscriptions for a specific message type
      */
-    Optional<InboundClientSubscription> findByMessageTypeAndActiveTrue(String messageType);
+    List<InboundClientSubscription> findByMessageTypeAndActiveTrue(String messageType);
 
     /**
      * Find subscription history for a specific message type ordered by creation date

@@ -6,11 +6,14 @@ import com.payaza.nps.dto.ReportRequestDto;
 import com.payaza.nps.dto.WebhookConfigDto;
 import com.payaza.nps.model.InternalClient;
 import com.payaza.nps.repository.InternalClientRepository;
+import com.payaza.nps.service.InternalClientRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,9 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for new APIs
  */
 @SpringBootTest
-@AutoConfigureWebMvc
-@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@AutoConfigureMockMvc
+@ActiveProfiles("integration-test")
 @Transactional
+@Import(com.payaza.nps.config.IntegrationTestConfig.class)
 class NewApisIntegrationTest {
 
     @Autowired
@@ -45,6 +50,9 @@ class NewApisIntegrationTest {
     @Autowired
     private InternalClientRepository clientRepository;
 
+    @Autowired
+    private InternalClientRegistry clientRegistry;
+
     private InternalClient testClient;
     private String authToken;
 
@@ -52,9 +60,9 @@ class NewApisIntegrationTest {
     void setUp() {
         // Create test client
         testClient = new InternalClient();
-        testClient.setClientId("TEST_CLIENT");
+        testClient.setClientId("TEST");
         testClient.setClientName("Test Client");
-        testClient.setApiKey("test_api_key_12345");
+        testClient.setApiKey("test_api_key_12345_secure_long");
         testClient.setTransactionPrefix("TST");
         testClient.setClientType("BANK");
         testClient.setActive(true);
@@ -62,14 +70,17 @@ class NewApisIntegrationTest {
         testClient.setUpdatedAt(LocalDateTime.now());
         
         clientRepository.save(testClient);
+        
+        // Refresh the client registry cache to include the test client
+        clientRegistry.refreshCache();
     }
 
     @Test
     void authenticationFlow_ShouldWorkEndToEnd() throws Exception {
         // Given
         LoginRequestDto loginRequest = new LoginRequestDto();
-        loginRequest.setClientId("TEST_CLIENT");
-        loginRequest.setApiKey("test_api_key_12345");
+        loginRequest.setClientId("TEST");
+        loginRequest.setApiKey("test_api_key_12345_secure_long");
 
         // When - Login
         MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
@@ -78,7 +89,7 @@ class NewApisIntegrationTest {
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
-                .andExpect(jsonPath("$.clientId").value("TEST_CLIENT"))
+                .andExpect(jsonPath("$.clientId").value("TEST"))
                 .andExpect(jsonPath("$.clientName").value("Test Client"))
                 .andReturn();
 
@@ -91,7 +102,7 @@ class NewApisIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/profile")
                 .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("TEST_CLIENT"))
+                .andExpect(jsonPath("$.id").value("TEST"))
                 .andExpect(jsonPath("$.clientName").value("Test Client"));
 
         // When - Refresh Token
@@ -241,7 +252,7 @@ class NewApisIntegrationTest {
         mockMvc.perform(get("/api/v1/admin/system/performance"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.averageResponseTime").exists())
-                .andExpect(jsonPath("$.throughput").exists());
+                .andExpect(jsonPath("$.requestsPerSecond").exists());
 
         // When - Get Database Health
         mockMvc.perform(get("/api/v1/admin/system/database/health"))
@@ -293,7 +304,7 @@ class NewApisIntegrationTest {
                 .andExpect(status().isForbidden()); // Should require admin role
 
         // When - Get Client API Usage
-        mockMvc.perform(get("/api/v1/admin/integrations/rate-limits/TEST_CLIENT/usage"))
+        mockMvc.perform(get("/api/v1/admin/integrations/rate-limits/TEST/usage"))
                 .andExpect(status().isForbidden()); // Should require admin role
     }
 
@@ -301,7 +312,7 @@ class NewApisIntegrationTest {
     void securityFlow_ShouldEnforceAuthentication() throws Exception {
         // When - Try to access protected endpoint without authentication
         mockMvc.perform(get("/api/v1/auth/profile"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
         // When - Try to access admin endpoint without admin role
         mockMvc.perform(get("/api/v1/admin/reports/templates"))

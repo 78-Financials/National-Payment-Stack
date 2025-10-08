@@ -276,6 +276,7 @@ public class AuditService {
     private AuditLog createBaseAuditLog(String action, String resource, AuditLog.ActionType actionType,
                                        String userId, String clientId) {
         AuditLog auditLog = new AuditLog(action, resource, actionType, userId, clientId);
+        auditLog.setTimestamp(LocalDateTime.now()); // Explicitly set timestamp
         auditLog.setRequestId(UUID.randomUUID().toString());
         return auditLog;
     }

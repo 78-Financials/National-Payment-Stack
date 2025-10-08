@@ -108,6 +108,7 @@ public class SharedAlertService {
         Alert alert = new Alert();
         
         // Set basic alert information
+        alert.setAlertRuleId(1L); // Default alert rule ID for system alerts
         alert.setName(String.format("%s Processing Failure", messageType.toUpperCase()));
         alert.setMessage(String.format("Error processing %s message for transaction %s: %s", 
             messageType, transactionId != null ? transactionId : "UNKNOWN", errorMessage));

@@ -17,7 +17,7 @@ public class LogAggregationService {
     private static final Logger logger = LoggerFactory.getLogger(LogAggregationService.class);
     
     // In-memory log storage for demo purposes (in production, use Elasticsearch or similar)
-    private final List<Map<String, Object>> logEntries = new ArrayList<>();
+    private final List<Map<String, Object>> logEntries = Collections.synchronizedList(new ArrayList<>());
     
     /**
      * Get system logs with filtering and pagination
@@ -78,49 +78,57 @@ public class LogAggregationService {
      * Get log statistics
      */
     public Map<String, Object> getLogStatistics(LocalDateTime from, LocalDateTime to) {
-        // Generate mock log entries if empty
-        if (logEntries.isEmpty()) {
-            generateMockLogEntries();
+        try {
+            // Generate mock log entries if empty
+            if (logEntries.isEmpty()) {
+                generateMockLogEntries();
+            }
+            
+            List<Map<String, Object>> filteredLogs = logEntries.stream()
+                .filter(log -> from == null || ((LocalDateTime) log.get("timestamp")).isAfter(from))
+                .filter(log -> to == null || ((LocalDateTime) log.get("timestamp")).isBefore(to))
+                .collect(Collectors.toList());
+            
+            Map<String, Object> stats = new HashMap<>();
+            
+            // Total logs
+            stats.put("totalLogs", filteredLogs.size());
+            
+            // Logs by level
+            Map<String, Long> logsByLevel = filteredLogs.stream()
+                .collect(Collectors.groupingBy(
+                    log -> log.get("level").toString(),
+                    Collectors.counting()
+                ));
+            stats.put("logsByLevel", logsByLevel);
+            
+            // Logs by source
+            Map<String, Long> logsBySource = filteredLogs.stream()
+                .collect(Collectors.groupingBy(
+                    log -> log.get("source").toString(),
+                    Collectors.counting()
+                ));
+            stats.put("logsBySource", logsBySource);
+            
+            // Error rate
+            long errorCount = filteredLogs.stream()
+                .filter(log -> "ERROR".equals(log.get("level")))
+                .count();
+            double errorRate = filteredLogs.isEmpty() ? 0.0 : (double) errorCount / filteredLogs.size() * 100;
+            stats.put("errorRate", errorRate);
+            
+            // Time range
+            Map<String, Object> timeRange = new HashMap<>();
+            timeRange.put("from", from);
+            timeRange.put("to", to);
+            stats.put("timeRange", timeRange);
+            stats.put("generatedAt", LocalDateTime.now());
+            
+            return stats;
+        } catch (Exception e) {
+            logger.error("Error getting log statistics: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get log statistics", e);
         }
-        
-        List<Map<String, Object>> filteredLogs = logEntries.stream()
-            .filter(log -> from == null || ((LocalDateTime) log.get("timestamp")).isAfter(from))
-            .filter(log -> to == null || ((LocalDateTime) log.get("timestamp")).isBefore(to))
-            .collect(Collectors.toList());
-        
-        Map<String, Object> stats = new HashMap<>();
-        
-        // Total logs
-        stats.put("totalLogs", filteredLogs.size());
-        
-        // Logs by level
-        Map<String, Long> logsByLevel = filteredLogs.stream()
-            .collect(Collectors.groupingBy(
-                log -> log.get("level").toString(),
-                Collectors.counting()
-            ));
-        stats.put("logsByLevel", logsByLevel);
-        
-        // Logs by source
-        Map<String, Long> logsBySource = filteredLogs.stream()
-            .collect(Collectors.groupingBy(
-                log -> log.get("source").toString(),
-                Collectors.counting()
-            ));
-        stats.put("logsBySource", logsBySource);
-        
-        // Error rate
-        long errorCount = filteredLogs.stream()
-            .filter(log -> "ERROR".equals(log.get("level")))
-            .count();
-        double errorRate = filteredLogs.isEmpty() ? 0.0 : (double) errorCount / filteredLogs.size() * 100;
-        stats.put("errorRate", errorRate);
-        
-        // Time range
-        stats.put("timeRange", Map.of("from", from, "to", to));
-        stats.put("generatedAt", LocalDateTime.now());
-        
-        return stats;
     }
     
     /**

@@ -326,7 +326,7 @@ NPS_MERCHANT_ID=your-bank-code
 # Admin Configuration
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-ADMIN_API_KEY=admin_api_key_99999
+ADMIN_API_KEY=admin_api_key_99999_secure_default
 ```
 
 ### Application Properties

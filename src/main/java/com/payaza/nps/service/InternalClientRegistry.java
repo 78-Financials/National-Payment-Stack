@@ -45,7 +45,7 @@ public class InternalClientRegistry {
     @Value("${admin.default-client-name:System Administrator}")
     private String defaultAdminClientName;
     
-    @Value("${admin.default-api-key:admin_api_key_99999}")
+    @Value("${admin.default-api-key:admin_api_key_99999_secure_default}")
     private String defaultAdminApiKey;
     
     @Value("${admin.default-transaction-prefix:ADM}")
@@ -292,5 +292,30 @@ public class InternalClientRegistry {
     public boolean isClientActive(String clientId) {
         InternalClient client = clientsById.get(clientId);
         return client != null && client.isActive();
+    }
+    
+    /**
+     * Update client in database and cache
+     */
+    public void updateClient(InternalClient client) {
+        if (client != null) {
+            clientRepository.save(client);
+            updateClientInCache(client);
+            logger.info("Updated client: {}", client.getClientId());
+        }
+    }
+    
+    /**
+     * Get client by contact email
+     */
+    public InternalClient getClientByEmail(String email) {
+        return clientRepository.findByContactEmail(email).orElse(null);
+    }
+    
+    /**
+     * Get client by reset token
+     */
+    public InternalClient getClientByResetToken(String resetToken) {
+        return clientRepository.findByPasswordResetToken(resetToken).orElse(null);
     }
 }

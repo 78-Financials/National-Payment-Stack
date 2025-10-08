@@ -91,7 +91,7 @@ public class AlertEngine {
     /**
      * Evaluate a condition expression against metrics
      */
-    private boolean evaluateCondition(String condition, MetricsDto.CombinedMetrics metrics) {
+    public boolean evaluateCondition(String condition, MetricsDto.CombinedMetrics metrics) {
         try {
             Matcher matcher = CONDITION_PATTERN.matcher(condition);
             if (!matcher.find()) {
@@ -161,7 +161,8 @@ public class AlertEngine {
         
         switch (metricName.toLowerCase()) {
             case "success_rate": return txMetrics.getSuccessRate();
-            case "failure_rate": return txMetrics.getFailureRate();
+            case "failure_rate":
+            case "error_rate": return txMetrics.getFailureRate();
             case "timeout_rate": return txMetrics.getTimeoutRate();
             case "total_transactions": return txMetrics.getTotalTransactions().doubleValue();
             case "successful_transactions": return txMetrics.getSuccessfulTransactions().doubleValue();
