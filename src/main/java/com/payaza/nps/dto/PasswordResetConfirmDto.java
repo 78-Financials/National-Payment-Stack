@@ -5,13 +5,13 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * DTO for changing user password
+ * DTO for confirming password reset
  */
-public class ChangePasswordRequestDto {
+public class PasswordResetConfirmDto {
     
-    @NotBlank(message = "Current password is required")
-    @JsonProperty("currentPassword")
-    private String currentPassword;
+    @NotBlank(message = "Reset token is required")
+    @JsonProperty("token")
+    private String token;
     
     @NotBlank(message = "New password is required")
     @Size(min = 8, message = "New password must be at least 8 characters")
@@ -23,17 +23,17 @@ public class ChangePasswordRequestDto {
     private String confirmPassword;
     
     // Constructors
-    public ChangePasswordRequestDto() {}
+    public PasswordResetConfirmDto() {}
     
-    public ChangePasswordRequestDto(String currentPassword, String newPassword, String confirmPassword) {
-        this.currentPassword = currentPassword;
+    public PasswordResetConfirmDto(String token, String newPassword, String confirmPassword) {
+        this.token = token;
         this.newPassword = newPassword;
         this.confirmPassword = confirmPassword;
     }
     
     // Getters and Setters
-    public String getCurrentPassword() { return currentPassword; }
-    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
     
     public String getNewPassword() { return newPassword; }
     public void setNewPassword(String newPassword) { this.newPassword = newPassword; }

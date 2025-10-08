@@ -24,6 +24,17 @@ public class IntegrationTestConfig {
         // Use NoOpPasswordEncoder for tests (not secure, but fine for testing)
         return NoOpPasswordEncoder.getInstance();
     }
+    
+    @Bean
+    @Primary
+    public org.springframework.security.authentication.dao.DaoAuthenticationProvider authenticationProvider(
+            org.springframework.security.core.userdetails.UserDetailsService userDetailsService) {
+        org.springframework.security.authentication.dao.DaoAuthenticationProvider authProvider = 
+            new org.springframework.security.authentication.dao.DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 
     @Bean
     @Primary

@@ -261,27 +261,34 @@ export const apiClient = new ApiClient();
 ```typescript
 // src/services/paymentService.ts
 import { apiClient } from './apiClient';
-import { PaymentRequest, PaymentResponse, PaymentHistory, PaymentStatus } from '../types/payment';
+import { 
+  Pacs008RequestDto, 
+  Pacs008ResponseDto, 
+  Pacs002RequestDto, 
+  Pacs002ResponseDto,
+  Pacs028RequestDto,
+  Pacs028ResponseDto,
+  PaymentHistoryRequest,
+  PaymentHistoryResponse 
+} from '../types/payment';
 
 export class PaymentService {
-  async initiatePayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
-    return apiClient.post<PaymentResponse>('/payments/initiate', paymentData);
+  // PACS.008 - Initiate Payment
+  async initiatePayment(paymentData: Pacs008RequestDto): Promise<Pacs008ResponseDto> {
+    return apiClient.post<Pacs008ResponseDto>('/payments/initiate', paymentData);
   }
 
-  async checkPaymentStatus(transactionId: string, messageId: string): Promise<PaymentStatus> {
-    return apiClient.post<PaymentStatus>('/payments/status', {
-      originalTransactionId: transactionId,
-      originalMessageId: messageId,
-    });
+  // PACS.002 - Payment Status Report
+  async processStatusReport(statusData: Pacs002RequestDto): Promise<Pacs002ResponseDto> {
+    return apiClient.post<Pacs002ResponseDto>('/payments/status-report', statusData);
   }
 
-  async getPaymentHistory(params: {
-    page?: number;
-    size?: number;
-    from?: string;
-    to?: string;
-    status?: string;
-  }): Promise<PaymentHistory> {
+  // PACS.028 - Payment Status Request
+  async requestPaymentStatus(statusRequest: Pacs028RequestDto): Promise<Pacs028ResponseDto> {
+    return apiClient.post<Pacs028ResponseDto>('/payments/status-request', statusRequest);
+  }
+
+  async getPaymentHistory(params: PaymentHistoryRequest): Promise<PaymentHistoryResponse> {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -289,11 +296,132 @@ export class PaymentService {
       }
     });
 
-    return apiClient.get<PaymentHistory>(`/payments/history?${queryParams}`);
+    return apiClient.get<PaymentHistoryResponse>(`/payments/history?${queryParams}`);
   }
 }
 
 export const paymentService = new PaymentService();
+```
+
+#### **Account Verification Service**
+```typescript
+// src/services/verificationService.ts
+import { apiClient } from './apiClient';
+import { 
+  Acmt023RequestDto, 
+  Acmt023ResponseDto, 
+  Acmt024RequestDto, 
+  Acmt024ResponseDto 
+} from '../types/verification';
+
+export class VerificationService {
+  // ACMT.023 - Verify Account
+  async verifyAccount(verificationData: Acmt023RequestDto): Promise<Acmt023ResponseDto> {
+    return apiClient.post<Acmt023ResponseDto>('/identification/verify', verificationData);
+  }
+
+  // ACMT.024 - Identification Verification Report
+  async reportVerification(reportData: Acmt024RequestDto): Promise<Acmt024ResponseDto> {
+    return apiClient.post<Acmt024ResponseDto>('/identification/report', reportData);
+  }
+}
+
+export const verificationService = new VerificationService();
+```
+
+#### **Integration Management Service**
+```typescript
+// src/services/integrationService.ts
+import { apiClient } from './apiClient';
+import { 
+  WebhookConfigDto, 
+  RateLimitConfigDto, 
+  ClientApiUsageDto,
+  WebhookTestResponse 
+} from '../types/integration';
+
+export class IntegrationService {
+  // Webhook Management
+  async getWebhookConfigurations(): Promise<WebhookConfigDto[]> {
+    return apiClient.get<WebhookConfigDto[]>('/admin/integrations/webhooks');
+  }
+
+  async createWebhookConfiguration(webhook: WebhookConfigDto): Promise<WebhookConfigDto> {
+    return apiClient.post<WebhookConfigDto>('/admin/integrations/webhooks', webhook);
+  }
+
+  async updateWebhookConfiguration(id: number, webhook: WebhookConfigDto): Promise<WebhookConfigDto> {
+    return apiClient.put<WebhookConfigDto>(`/admin/integrations/webhooks/${id}`, webhook);
+  }
+
+  async deleteWebhookConfiguration(id: number): Promise<void> {
+    return apiClient.delete(`/admin/integrations/webhooks/${id}`);
+  }
+
+  async testWebhookConfiguration(id: number): Promise<WebhookTestResponse> {
+    return apiClient.post<WebhookTestResponse>(`/admin/integrations/webhooks/${id}/test`);
+  }
+
+  // Rate Limit Management
+  async getRateLimitConfigurations(): Promise<RateLimitConfigDto[]> {
+    return apiClient.get<RateLimitConfigDto[]>('/admin/integrations/rate-limits');
+  }
+
+  async updateRateLimitConfiguration(clientId: string, config: RateLimitConfigDto): Promise<RateLimitConfigDto> {
+    return apiClient.put<RateLimitConfigDto>(`/admin/integrations/rate-limits/${clientId}`, config);
+  }
+
+  async getClientApiUsage(clientId: string): Promise<ClientApiUsageDto> {
+    return apiClient.get<ClientApiUsageDto>(`/admin/integrations/rate-limits/${clientId}/usage`);
+  }
+}
+
+export const integrationService = new IntegrationService();
+```
+
+#### **Inbound Subscription Service**
+```typescript
+// src/services/subscriptionService.ts
+import { apiClient } from './apiClient';
+import { 
+  InboundSubscriptionRequestDto, 
+  InboundSubscriptionResponseDto, 
+  QueueStatusDto,
+  SubscriptionHistoryResponse 
+} from '../types/subscription';
+
+export class SubscriptionService {
+  // PACS.008 Subscription Management
+  async getCurrentInboundPacs008Subscriber(): Promise<InboundSubscriptionResponseDto | null> {
+    return apiClient.get<InboundSubscriptionResponseDto>('/admin/inbound-subscriptions/pacs008/current');
+  }
+
+  async setInboundPacs008Subscriber(subscription: InboundSubscriptionRequestDto): Promise<InboundSubscriptionResponseDto> {
+    return apiClient.post<InboundSubscriptionResponseDto>('/admin/inbound-subscriptions/pacs008', subscription);
+  }
+
+  async removeInboundPacs008Subscriber(): Promise<void> {
+    return apiClient.delete('/admin/inbound-subscriptions/pacs008');
+  }
+
+  // Queue Management
+  async getQueueStatus(): Promise<QueueStatusDto> {
+    return apiClient.get<QueueStatusDto>('/admin/inbound-subscriptions/queue/status');
+  }
+
+  async getSubscriptionHistory(params: { page?: number; size?: number }): Promise<SubscriptionHistoryResponse> {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    return apiClient.get<SubscriptionHistoryResponse>(`/admin/inbound-subscriptions/history?${queryParams}`);
+  }
+}
+
+export const subscriptionService = new SubscriptionService();
 ```
 
 ---
@@ -779,7 +907,506 @@ export const TransactionChart: React.FC<TransactionChartProps> = ({ data, title 
 };
 ```
 
-### **4. Data Table Components**
+### **4. Integration Management Components**
+
+#### **Webhook Configuration Component**
+```typescript
+// src/components/integrations/WebhookConfig.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Switch,
+  FormControlLabel,
+  Button,
+  Grid,
+  Chip,
+  Autocomplete,
+  Typography,
+  Alert,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from '@mui/material';
+import { Delete, Edit, Send } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { integrationService } from '../../services/integrationService';
+import { WebhookConfigDto } from '../../types/integration';
+
+interface WebhookConfigProps {
+  webhook: WebhookConfigDto;
+  onSave: (webhook: WebhookConfigDto) => void;
+  onDelete: (id: number) => void;
+  onTest: (id: number) => void;
+}
+
+export const WebhookConfig: React.FC<WebhookConfigProps> = ({ 
+  webhook, 
+  onSave, 
+  onDelete, 
+  onTest 
+}) => {
+  const [config, setConfig] = useState<WebhookConfigDto>(webhook);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+
+  const eventTypes = [
+    'PAYMENT_SUCCESS',
+    'PAYMENT_FAILED',
+    'ACCOUNT_VERIFIED',
+    'ALERT_CREATED',
+    'SYSTEM_HEALTH_WARNING'
+  ];
+
+  const handleTest = async () => {
+    try {
+      const result = await integrationService.testWebhookConfiguration(webhook.id!);
+      setTestResult(result);
+      setTestDialogOpen(true);
+    } catch (error) {
+      console.error('Webhook test failed:', error);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">
+            {config.name}
+          </Typography>
+          <Box>
+            <IconButton onClick={handleTest} color="primary">
+              <Send />
+            </IconButton>
+            <IconButton onClick={() => onDelete(webhook.id!)} color="error">
+              <Delete />
+            </IconButton>
+          </Box>
+        </Box>
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Webhook Name"
+              value={config.name}
+              onChange={(e) => setConfig({...config, name: e.target.value})}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Webhook URL"
+              value={config.url}
+              onChange={(e) => setConfig({...config, url: e.target.value})}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              options={eventTypes}
+              value={config.eventTypes}
+              onChange={(_, value) => setConfig({...config, eventTypes: value})}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Event Types" placeholder="Select events" />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="API Key"
+              type="password"
+              value={config.apiKey}
+              onChange={(e) => setConfig({...config, apiKey: e.target.value})}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Timeout (seconds)"
+              type="number"
+              value={config.timeoutSeconds}
+              onChange={(e) => setConfig({...config, timeoutSeconds: parseInt(e.target.value)})}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={config.isActive}
+                  onChange={(e) => setConfig({...config, isActive: e.target.checked})}
+                />
+              }
+              label="Active"
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              onClick={() => onSave(config)}
+            >
+              Save Configuration
+            </Button>
+          </Grid>
+        </Grid>
+
+        {/* Test Result Dialog */}
+        <Dialog open={testDialogOpen} onClose={() => setTestDialogOpen(false)}>
+          <DialogTitle>Webhook Test Result</DialogTitle>
+          <DialogContent>
+            {testResult && (
+              <Box>
+                <Alert severity={testResult.success ? 'success' : 'error'}>
+                  {testResult.success ? 'Test Successful' : 'Test Failed'}
+                </Alert>
+                <Typography variant="body2" mt={2}>
+                  Response: {testResult.response}
+                </Typography>
+                <Typography variant="body2">
+                  Response Time: {testResult.responseTime}ms
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setTestDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+#### **Inbound Subscription Management Component**
+```typescript
+// src/components/integrations/InboundSubscriptionManager.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Grid,
+  TextField,
+  FormControlLabel,
+  Switch,
+  Alert,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
+} from '@mui/material';
+import { Add, Delete, Refresh } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { subscriptionService } from '../../services/subscriptionService';
+import { 
+  InboundSubscriptionRequestDto, 
+  InboundSubscriptionResponseDto,
+  QueueStatusDto 
+} from '../../types/subscription';
+
+export const InboundSubscriptionManager: React.FC = () => {
+  const [currentSubscriber, setCurrentSubscriber] = useState<InboundSubscriptionResponseDto | null>(null);
+  const [queueStatus, setQueueStatus] = useState<QueueStatusDto | null>(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [newSubscription, setNewSubscription] = useState<InboundSubscriptionRequestDto>({
+    clientId: '',
+    messageType: 'PACS008',
+    callbackUrl: '',
+    isActive: true,
+    description: ''
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [subscriber, queue, history] = await Promise.all([
+        subscriptionService.getCurrentInboundPacs008Subscriber(),
+        subscriptionService.getQueueStatus(),
+        subscriptionService.getSubscriptionHistory({ page: 0, size: 10 })
+      ]);
+      
+      setCurrentSubscriber(subscriber);
+      setQueueStatus(queue);
+      setSubscriptionHistory(history.content);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetSubscriber = async () => {
+    try {
+      const result = await subscriptionService.setInboundPacs008Subscriber(newSubscription);
+      setCurrentSubscriber(result);
+      setNewSubscription({
+        clientId: '',
+        messageType: 'PACS008',
+        callbackUrl: '',
+        isActive: true,
+        description: ''
+      });
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleRemoveSubscriber = async () => {
+    try {
+      await subscriptionService.removeInboundPacs008Subscriber();
+      setCurrentSubscriber(null);
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'HEALTHY': return 'success';
+      case 'WARNING': return 'warning';
+      case 'CRITICAL': return 'error';
+      default: return 'default';
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Inbound Subscription Management
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      <Grid container spacing={3}>
+        {/* Current Subscriber */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Current PACS.008 Subscriber
+              </Typography>
+              {currentSubscriber ? (
+                <Box>
+                  <Typography variant="body1">
+                    <strong>Client ID:</strong> {currentSubscriber.clientId}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Callback URL:</strong> {currentSubscriber.callbackUrl}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Status:</strong> 
+                    <Chip 
+                      label={currentSubscriber.isActive ? 'Active' : 'Inactive'} 
+                      color={currentSubscriber.isActive ? 'success' : 'default'}
+                      size="small"
+                      sx={{ ml: 1 }}
+                    />
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleRemoveSubscriber}
+                    sx={{ mt: 2 }}
+                  >
+                    Remove Subscriber
+                  </Button>
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No active subscriber
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Queue Status */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Queue Status
+              </Typography>
+              {queueStatus && (
+                <Box>
+                  <Typography variant="body1">
+                    <strong>Queue Size:</strong> {queueStatus.queueSize}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Processing Rate:</strong> {queueStatus.processingRate}/min
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Avg Processing Time:</strong> {queueStatus.averageProcessingTime}ms
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Status:</strong>
+                    <Chip 
+                      label={queueStatus.status} 
+                      color={getStatusColor(queueStatus.status)}
+                      size="small"
+                      sx={{ ml: 1 }}
+                    />
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Set New Subscriber */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Set New Subscriber
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Client ID"
+                    value={newSubscription.clientId}
+                    onChange={(e) => setNewSubscription({...newSubscription, clientId: e.target.value})}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Callback URL"
+                    value={newSubscription.callbackUrl}
+                    onChange={(e) => setNewSubscription({...newSubscription, callbackUrl: e.target.value})}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={newSubscription.description}
+                    onChange={(e) => setNewSubscription({...newSubscription, description: e.target.value})}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={newSubscription.isActive}
+                        onChange={(e) => setNewSubscription({...newSubscription, isActive: e.target.checked})}
+                      />
+                    }
+                    label="Active"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    onClick={handleSetSubscriber}
+                    disabled={!newSubscription.clientId || !newSubscription.callbackUrl}
+                  >
+                    Set Subscriber
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Subscription History */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                  Subscription History
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<Refresh />}
+                  onClick={loadData}
+                >
+                  Refresh
+                </Button>
+              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Client ID</TableCell>
+                      <TableCell>Message Type</TableCell>
+                      <TableCell>Callback URL</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Created At</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {subscriptionHistory.map((subscription, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{subscription.clientId}</TableCell>
+                        <TableCell>{subscription.messageType}</TableCell>
+                        <TableCell>{subscription.callbackUrl}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={subscription.isActive ? 'Active' : 'Inactive'} 
+                            color={subscription.isActive ? 'success' : 'default'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(subscription.createdAt).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+```
+
+### **5. Data Table Components**
 
 #### **Payment History Table**
 ```typescript

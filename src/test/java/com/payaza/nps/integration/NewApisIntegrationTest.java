@@ -7,6 +7,7 @@ import com.payaza.nps.dto.WebhookConfigDto;
 import com.payaza.nps.model.InternalClient;
 import com.payaza.nps.repository.InternalClientRepository;
 import com.payaza.nps.service.InternalClientRegistry;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,14 @@ class NewApisIntegrationTest {
         testClient = new InternalClient();
         testClient.setClientId("TEST");
         testClient.setClientName("Test Client");
+        testClient.setEmail("test@example.com");
+        
+        // Generate BCrypt hash for the test password
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+        String testPassword = "TestPassword@123";
+        String encodedPassword = encoder.encode(testPassword);
+        testClient.setPassword(encodedPassword);
+        
         testClient.setApiKey("test_api_key_12345_secure_long");
         testClient.setTransactionPrefix("TST");
         testClient.setClientType("BANK");
@@ -79,14 +88,18 @@ class NewApisIntegrationTest {
     void authenticationFlow_ShouldWorkEndToEnd() throws Exception {
         // Given
         LoginRequestDto loginRequest = new LoginRequestDto();
-        loginRequest.setClientId("TEST");
-        loginRequest.setApiKey("test_api_key_12345_secure_long");
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("TestPassword@123");
 
         // When - Login
         MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
+                .andDo(result -> {
+                    System.out.println("Login response status: " + result.getResponse().getStatus());
+                    System.out.println("Login response content: " + result.getResponse().getContentAsString());
+                })
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.clientId").value("TEST"))
@@ -327,8 +340,8 @@ class NewApisIntegrationTest {
     void errorHandlingFlow_ShouldReturnAppropriateErrors() throws Exception {
         // Given - Invalid login request
         LoginRequestDto invalidLoginRequest = new LoginRequestDto();
-        invalidLoginRequest.setClientId("INVALID_CLIENT");
-        invalidLoginRequest.setApiKey("invalid_api_key");
+        invalidLoginRequest.setEmail("invalid@example.com");
+        invalidLoginRequest.setPassword("wrongpassword");
 
         // When - Try to login with invalid credentials
         mockMvc.perform(post("/api/v1/auth/login")

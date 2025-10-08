@@ -55,8 +55,8 @@ class AuthControllerTest {
         
         // Setup test data
         loginRequest = new LoginRequestDto();
-        loginRequest.setClientId("testclient");
-        loginRequest.setApiKey("test-api-key");
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("password123");
 
         loginResponse = new LoginResponseDto();
         loginResponse.setToken("test-jwt-token");

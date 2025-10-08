@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NPS (Nigerian Payment Stack) API Collection",
-    "description": "Comprehensive API collection for the Nigerian Payment Stack system including all endpoints for payments, authentication, admin management, analytics, alerts, and system monitoring.",
+    "description": "Comprehensive API collection for the Nigerian Payment Stack system including all endpoints for payments, authentication, admin management, analytics, alerts, and system monitoring.\n\n## Authentication Methods:\n1. **Web Access**: Use email/password login to get JWT token for web application access\n2. **Direct API Access**: Use X-API-Key header for direct API calls\n\n## Default Admin Credentials:\n- Email: admin@nps.payaza.com\n- Password: Admin@123456\n- API Key: admin_api_key_99999_secure_default",
     "version": "1.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -35,6 +35,16 @@
       "key": "api_key",
       "value": "admin_api_key_99999_secure_default",
       "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@nps.payaza.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "Admin@123456",
+      "type": "string"
     }
   ],
   "item": [
@@ -54,14 +64,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": \"ADMIN\",\n  \"apiKey\": \"{{api_key}}\"\n}"
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/{{api_version}}/auth/login",
               "host": ["{{base_url}}"],
               "path": ["api", "{{api_version}}", "auth", "login"]
             },
-            "description": "Login with client credentials to get JWT token"
+            "description": "Login with email and password to get JWT token for web access"
           },
           "response": [
             {
@@ -76,7 +86,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"clientId\": \"ADMIN\",\n  \"apiKey\": \"admin_api_key_99999_secure_default\"\n}"
+                  "raw": "{\n  \"email\": \"admin@nps.payaza.com\",\n  \"password\": \"Admin@123456\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/api/{{api_version}}/auth/login",
@@ -193,17 +203,12 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/x-www-form-urlencoded"
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "email",
-                  "value": "admin@payaza.africa"
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/{{api_version}}/auth/forgot-password",
@@ -220,21 +225,12 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/x-www-form-urlencoded"
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "token",
-                  "value": "reset_token_here"
-                },
-                {
-                  "key": "newPassword",
-                  "value": "new_password"
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"newPassword\": \"NewPassword@123\",\n  \"confirmPassword\": \"NewPassword@123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/{{api_version}}/auth/reset-password",
@@ -260,6 +256,95 @@
               "path": ["api", "{{api_version}}", "auth", "logout"]
             },
             "description": "Logout current user"
+          }
+        },
+        {
+          "name": "Unlock Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "{{admin_email}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/unlock-account",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "unlock-account"]
+            },
+            "description": "Unlock user account (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "API Key Authentication Examples",
+      "description": "Examples of using API keys for direct API access (alternative to JWT tokens)",
+      "item": [
+        {
+          "name": "Payment with API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"MSG123456789\",\n  \"originalMessageId\": \"MSG123456789\",\n  \"transactionId\": \"TXN123456789\",\n  \"amount\": \"1000.00\",\n  \"currency\": \"NGN\",\n  \"debtorAccount\": \"1234567890\",\n  \"creditorAccount\": \"0987654321\",\n  \"debtorBankCode\": \"001\",\n  \"creditorBankCode\": \"002\",\n  \"paymentReference\": \"Payment for services\",\n  \"remittanceInfo\": \"Payment details\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/payments/initiate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "payments", "initiate"]
+            },
+            "description": "Example of making a payment request using API key authentication instead of JWT token"
+          }
+        },
+        {
+          "name": "Account Verification with API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"MSG123456789\",\n  \"accountNumber\": \"1234567890\",\n  \"bankCode\": \"001\",\n  \"accountName\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/identification/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "identification", "verify"]
+            },
+            "description": "Example of account verification using API key authentication"
           }
         }
       ]
@@ -333,7 +418,7 @@
           ]
         },
         {
-          "name": "Check Payment Status (PACS.028)",
+          "name": "Payment Status Report (PACS.002)",
           "request": {
             "method": "POST",
             "header": [
@@ -348,14 +433,40 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"originalTransactionId\": \"BAN-123456789\",\n  \"originalMessageId\": \"MSG-123456789\"\n}"
+              "raw": "{\n  \"messageId\": \"MSG-123456789\",\n  \"originalMessageId\": \"MSG-987654321\",\n  \"transactionId\": \"BAN-123456789\",\n  \"paymentStatus\": \"SUCCESS\",\n  \"responseCode\": \"00\",\n  \"responseMessage\": \"Payment completed successfully\",\n  \"processedAt\": \"2024-01-01T10:35:00Z\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/{{api_version}}/payments/status",
+              "raw": "{{base_url}}/api/{{api_version}}/payments/status-report",
               "host": ["{{base_url}}"],
-              "path": ["api", "{{api_version}}", "payments", "status"]
+              "path": ["api", "{{api_version}}", "payments", "status-report"]
             },
-            "description": "Check payment status using PACS.028"
+            "description": "Process payment status report using PACS.002"
+          }
+        },
+        {
+          "name": "Payment Status Request (PACS.028)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"MSG-123456789\",\n  \"originalMessageId\": \"MSG-987654321\",\n  \"originalTransactionId\": \"BAN-123456789\",\n  \"requestDate\": \"2024-01-01T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/payments/status-request",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "payments", "status-request"]
+            },
+            "description": "Request payment status using PACS.028"
           }
         },
         {
@@ -420,7 +531,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"accountNumber\": \"1234567890\",\n  \"bankCode\": \"044\",\n  \"accountName\": \"John Doe\"\n}"
+              "raw": "{\n  \"messageId\": \"MSG-123456789\",\n  \"accountNumber\": \"1234567890\",\n  \"bankCode\": \"044\",\n  \"accountName\": \"John Doe\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/{{api_version}}/identification/verify",
@@ -428,6 +539,32 @@
               "path": ["api", "{{api_version}}", "identification", "verify"]
             },
             "description": "Verify account details using ACMT.023"
+          }
+        },
+        {
+          "name": "Identification Verification Report (ACMT.024)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"MSG-123456789\",\n  \"originalMessageId\": \"MSG-987654321\",\n  \"accountNumber\": \"1234567890\",\n  \"bankCode\": \"044\",\n  \"accountName\": \"John Doe\",\n  \"verificationStatus\": \"SUCCESS\",\n  \"accountVerified\": true,\n  \"responseCode\": \"00\",\n  \"responseMessage\": \"Account verification successful\",\n  \"processedAt\": \"2024-01-01T10:35:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/identification/report",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "identification", "report"]
+            },
+            "description": "Process identification verification report using ACMT.024"
           }
         }
       ]
@@ -488,7 +625,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": \"BANK001\",\n  \"clientName\": \"Test Bank\",\n  \"transactionPrefix\": \"BAN\",\n  \"allowedEndpoints\": [\"pacs008\", \"pacs028\", \"acmt023\"],\n  \"active\": true,\n  \"rateLimitPerMinute\": 100,\n  \"description\": \"Test bank for development\",\n  \"contactEmail\": \"admin@testbank.com\",\n  \"contactPhone\": \"+2341234567890\"\n}"
+              "raw": "{\n  \"clientId\": \"BANK001\",\n  \"clientName\": \"Test Bank\",\n  \"email\": \"admin@testbank.com\",\n  \"password\": \"TestBank@123456\",\n  \"transactionPrefix\": \"BAN\",\n  \"allowedEndpoints\": [\"pacs008\", \"pacs028\", \"acmt023\"],\n  \"active\": true,\n  \"rateLimitPerMinute\": 100,\n  \"description\": \"Test bank for development\",\n  \"contactEmail\": \"support@testbank.com\",\n  \"contactPhone\": \"+2341234567890\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/{{api_version}}/admin/clients",
@@ -2340,6 +2477,294 @@
               "path": ["api", "{{api_version}}", "admin", "notifications", "config", "reset"]
             },
             "description": "Reset notification configuration to defaults"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Integration Management",
+      "description": "Integration and webhook management endpoints",
+      "item": [
+        {
+          "name": "Get Webhook Configurations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/webhooks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "webhooks"]
+            },
+            "description": "Get all webhook configurations"
+          }
+        },
+        {
+          "name": "Create Webhook Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Payment Success Webhook\",\n  \"url\": \"https://example.com/webhook\",\n  \"apiKey\": \"webhook_api_key\",\n  \"eventTypes\": [\"PAYMENT_SUCCESS\", \"PAYMENT_FAILED\"],\n  \"isActive\": true,\n  \"retryAttempts\": 3,\n  \"timeoutSeconds\": 30,\n  \"description\": \"Webhook for payment notifications\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/webhooks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "webhooks"]
+            },
+            "description": "Create new webhook configuration"
+          }
+        },
+        {
+          "name": "Update Webhook Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Payment Success Webhook\",\n  \"url\": \"https://example.com/webhook/updated\",\n  \"apiKey\": \"new_webhook_api_key\",\n  \"eventTypes\": [\"PAYMENT_SUCCESS\", \"PAYMENT_FAILED\", \"PAYMENT_PENDING\"],\n  \"isActive\": true,\n  \"retryAttempts\": 5,\n  \"timeoutSeconds\": 45,\n  \"description\": \"Updated webhook for payment notifications\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/webhooks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "webhooks", "1"]
+            },
+            "description": "Update webhook configuration"
+          }
+        },
+        {
+          "name": "Delete Webhook Configuration",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/webhooks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "webhooks", "1"]
+            },
+            "description": "Delete webhook configuration"
+          }
+        },
+        {
+          "name": "Test Webhook Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/webhooks/1/test",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "webhooks", "1", "test"]
+            },
+            "description": "Test webhook configuration"
+          }
+        },
+        {
+          "name": "Get Rate Limit Configurations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/rate-limits",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "rate-limits"]
+            },
+            "description": "Get rate limit configurations"
+          }
+        },
+        {
+          "name": "Update Rate Limit Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hourlyLimit\": 1000,\n  \"dailyLimit\": 10000,\n  \"burstLimit\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/rate-limits/BANK001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "rate-limits", "BANK001"]
+            },
+            "description": "Update rate limit configuration for client"
+          }
+        },
+        {
+          "name": "Get Client API Usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/admin/integrations/rate-limits/BANK001/usage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "admin", "integrations", "rate-limits", "BANK001", "usage"]
+            },
+            "description": "Get client API usage statistics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Inbound Subscriptions",
+      "description": "Inbound client subscription management endpoints",
+      "item": [
+        {
+          "name": "Get Current Inbound PACS.008 Subscriber",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/inbound-subscriptions/pacs008/current",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "inbound-subscriptions", "pacs008", "current"]
+            },
+            "description": "Get current inbound PACS.008 subscriber"
+          }
+        },
+        {
+          "name": "Set Inbound PACS.008 Subscriber",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"BANK001\",\n  \"messageType\": \"PACS008\",\n  \"callbackUrl\": \"https://bank001.com/callback/pacs008\",\n  \"isActive\": true,\n  \"description\": \"Inbound PACS.008 subscription for BANK001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/inbound-subscriptions/pacs008",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "inbound-subscriptions", "pacs008"]
+            },
+            "description": "Set inbound PACS.008 subscriber"
+          }
+        },
+        {
+          "name": "Remove Inbound PACS.008 Subscriber",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/inbound-subscriptions/pacs008",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "inbound-subscriptions", "pacs008"]
+            },
+            "description": "Remove inbound PACS.008 subscriber"
+          }
+        },
+        {
+          "name": "Get Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/inbound-subscriptions/queue/status",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "inbound-subscriptions", "queue", "status"]
+            },
+            "description": "Get inbound message queue status"
+          }
+        },
+        {
+          "name": "Get Subscription History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/inbound-subscriptions/history?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "inbound-subscriptions", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get subscription history with pagination"
           }
         }
       ]

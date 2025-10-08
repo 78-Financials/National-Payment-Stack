@@ -6,6 +6,7 @@ import com.payaza.nps.model.InternalClient;
 import com.payaza.nps.repository.InternalClientRepository;
 import com.payaza.nps.service.ApiKeyGenerationService;
 import com.payaza.nps.service.AuditService;
+import com.payaza.nps.service.PasswordService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +46,9 @@ class AdminControllerTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private PasswordService passwordService;
+
     @InjectMocks
     private AdminController adminController;
 
@@ -74,17 +78,23 @@ class AdminControllerTest {
         CreateClientRequestDto requestDto = new CreateClientRequestDto();
         requestDto.setClientId("new");
         requestDto.setClientName("New Client");
+        requestDto.setEmail("new@example.com");
+        requestDto.setPassword("NewPassword@123");
         requestDto.setTransactionPrefix("NEW");
         requestDto.setAllowedEndpoints(new HashSet<>(Arrays.asList("pacs.008", "pacs.002")));
         
         InternalClient newClient = new InternalClient();
         newClient.setClientId("new");
         newClient.setClientName("New Client");
+        newClient.setEmail("new@example.com");
         newClient.setTransactionPrefix("NEW");
         
         when(clientRepository.existsByClientId("new")).thenReturn(false);
         when(clientRepository.existsByTransactionPrefix("NEW")).thenReturn(false);
+        when(clientRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(clientRepository.existsByApiKey(anyString())).thenReturn(false);
+        when(passwordService.isPasswordStrong("NewPassword@123")).thenReturn(true);
+        when(passwordService.encodePassword("NewPassword@123")).thenReturn("encoded_password");
         when(apiKeyGenerationService.generateClientApiKey("new")).thenReturn("generated-api-key-12345678901234567890");
         when(clientRepository.save(any(InternalClient.class))).thenReturn(newClient);
 
@@ -108,8 +118,7 @@ class AdminControllerTest {
         requestDto.setTransactionPrefix("DUP");
         requestDto.setAllowedEndpoints(new HashSet<>(Arrays.asList("pacs.008")));
         
-        when(clientRepository.existsByClientId("test")).thenReturn(true);
-        // Don't mock save() since it shouldn't be called
+        // Don't mock repository methods since validation should fail before reaching them
 
         // When & Then
         mockMvc.perform(post("/api/v1/admin/clients")
@@ -164,12 +173,16 @@ class AdminControllerTest {
         CreateClientRequestDto requestDto = new CreateClientRequestDto();
         requestDto.setClientId("test");
         requestDto.setClientName("Updated Client Name");
+        requestDto.setEmail("updated@example.com");
+        requestDto.setPassword("UpdatedPassword@123");
         requestDto.setTransactionPrefix("UPD");
         requestDto.setAllowedEndpoints(new HashSet<>(Arrays.asList("pacs.008")));
         
         InternalClient updatedClient = new InternalClient();
         updatedClient.setClientId("test");
         updatedClient.setClientName("Updated Client Name");
+        updatedClient.setEmail("updated@example.com");
+        updatedClient.setPassword("UpdatedPassword@123");
         updatedClient.setTransactionPrefix("UPD");
         
         when(clientRepository.findById(1L)).thenReturn(Optional.of(testClient));

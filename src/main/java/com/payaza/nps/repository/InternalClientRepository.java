@@ -98,6 +98,11 @@ public interface InternalClientRepository extends JpaRepository<InternalClient, 
     List<InternalClient> findByClientNameContainingIgnoreCase(String namePattern);
     
     /**
+     * Find client by email (for authentication)
+     */
+    Optional<InternalClient> findByEmail(String email);
+    
+    /**
      * Find client by contact email
      */
     Optional<InternalClient> findByContactEmail(String contactEmail);
@@ -106,4 +111,9 @@ public interface InternalClientRepository extends JpaRepository<InternalClient, 
      * Find client by password reset token
      */
     Optional<InternalClient> findByPasswordResetToken(String resetToken);
+    
+    /**
+     * Check if email exists
+     */
+    boolean existsByEmail(String email);
 }

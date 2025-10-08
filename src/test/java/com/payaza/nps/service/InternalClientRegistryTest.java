@@ -27,6 +27,9 @@ public class InternalClientRegistryTest {
     @Mock
     private ApiKeyGenerationService apiKeyGenerationService;
 
+    @Mock
+    private PasswordService passwordService;
+
     @InjectMocks
     private InternalClientRegistry clientRegistry;
 
@@ -47,6 +50,14 @@ public class InternalClientRegistryTest {
             java.lang.reflect.Field defaultAdminApiKeyField = InternalClientRegistry.class.getDeclaredField("defaultAdminApiKey");
             defaultAdminApiKeyField.setAccessible(true);
             defaultAdminApiKeyField.set(clientRegistry, "admin_api_key_99999_secure_default");
+            
+            java.lang.reflect.Field defaultAdminEmailField = InternalClientRegistry.class.getDeclaredField("defaultAdminEmail");
+            defaultAdminEmailField.setAccessible(true);
+            defaultAdminEmailField.set(clientRegistry, "admin@nps.payaza.com");
+            
+            java.lang.reflect.Field defaultAdminPasswordField = InternalClientRegistry.class.getDeclaredField("defaultAdminPassword");
+            defaultAdminPasswordField.setAccessible(true);
+            defaultAdminPasswordField.set(clientRegistry, "Admin@123456");
         } catch (Exception e) {
             // If reflection fails, the tests will fail with null pointer exceptions
             // which is better than silent failures
@@ -56,6 +67,8 @@ public class InternalClientRegistryTest {
         testClient.setId(1L);
         testClient.setClientId("TEST");
         testClient.setClientName("Test Client");
+        testClient.setEmail("test@example.com");
+        testClient.setPassword("encoded_password");
         testClient.setApiKey("test_api_key_123");
         testClient.setTransactionPrefix("TST");
         testClient.setAllowedEndpoints(Set.of("pacs008", "acmt023"));

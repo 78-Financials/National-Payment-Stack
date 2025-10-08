@@ -33,6 +33,9 @@ public class InternalClientRegistry {
 
     @Autowired
     private ApiKeyGenerationService apiKeyGenerationService;
+    
+    @Autowired
+    private PasswordService passwordService;
 
     // Cache for clients (API key -> Client)
     private final Map<String, InternalClient> clientsByApiKey = new HashMap<>();
@@ -47,6 +50,12 @@ public class InternalClientRegistry {
     
     @Value("${admin.default-api-key:admin_api_key_99999_secure_default}")
     private String defaultAdminApiKey;
+    
+    @Value("${admin.default-email:admin@nps.payaza.com}")
+    private String defaultAdminEmail;
+    
+    @Value("${admin.default-password:Admin@123456}")
+    private String defaultAdminPassword;
     
     @Value("${admin.default-transaction-prefix:ADM}")
     private String defaultAdminTransactionPrefix;
@@ -91,12 +100,17 @@ public class InternalClientRegistry {
                 InternalClient adminClient = new InternalClient();
                 adminClient.setClientId(defaultAdminClientId);
                 adminClient.setClientName(defaultAdminClientName);
+                adminClient.setEmail(defaultAdminEmail);
+                adminClient.setPassword(passwordService.encodePassword(defaultAdminPassword));
                 adminClient.setApiKey(defaultAdminApiKey);
                 adminClient.setTransactionPrefix(defaultAdminTransactionPrefix);
                 adminClient.setAllowedEndpoints(defaultAdminAllowedEndpoints);
                 adminClient.setActive(defaultAdminActive);
                 adminClient.setRateLimitPerMinute(defaultAdminRateLimitPerMinute);
                 adminClient.setDescription("Default system administrator client");
+                adminClient.setContactEmail("admin@nps.payaza.com");
+                adminClient.setContactPhone("+234-800-000-0000");
+                adminClient.setClientType("ADMIN");
                 adminClient.setCreatedBy("SYSTEM");
                 adminClient.setUpdatedBy("SYSTEM");
                 

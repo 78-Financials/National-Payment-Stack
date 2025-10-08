@@ -494,4 +494,56 @@ public class NotificationService {
             logger.error("Error sending recovery notification: {}", e.getMessage(), e);
         }
     }
+    
+    /**
+     * Send password reset email notification
+     */
+    public void sendPasswordResetEmail(String email, String resetToken, String clientName) {
+        try {
+            String subject = "Password Reset Request - NPS System";
+            String resetLink = "http://your-frontend-app/reset-password?token=" + resetToken;
+            
+            StringBuilder body = new StringBuilder();
+            body.append("Dear ").append(clientName).append(",\n\n");
+            body.append("You have requested a password reset for your NPS account.\n\n");
+            body.append("To reset your password, please click the link below:\n");
+            body.append(resetLink).append("\n\n");
+            body.append("This link will expire in 1 hour for security reasons.\n\n");
+            body.append("If you did not request this password reset, please ignore this email.\n\n");
+            body.append("Best regards,\n");
+            body.append("NPS Support Team");
+            
+            // Get email configuration
+            String emailApiUrl = configService.getEmailApiUrl();
+            String emailApiKey = configService.getEmailApiKey();
+            String emailSender = configService.getEmailSender();
+            
+            // Prepare email request payload
+            Map<String, Object> emailRequest = new HashMap<>();
+            emailRequest.put("to", List.of(email));
+            emailRequest.put("message", body.toString());
+            emailRequest.put("text", body.toString());
+            emailRequest.put("subject", subject);
+            emailRequest.put("sender", emailSender);
+            
+            logger.info("Sending password reset email to: {} with subject: {}", email, subject);
+            
+            // Send email via custom API
+            String response = webClient.post()
+                .uri(emailApiUrl)
+                .header("x-api-key", emailApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(emailRequest)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+            
+            logger.info("Password reset email sent successfully. Response: {}", response);
+            
+        } catch (WebClientResponseException e) {
+            logger.error("Error sending password reset email - HTTP {}: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+        } catch (Exception e) {
+            logger.error("Error sending password reset email: {}", e.getMessage(), e);
+        }
+    }
 }

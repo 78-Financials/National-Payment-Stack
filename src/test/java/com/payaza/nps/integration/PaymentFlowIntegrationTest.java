@@ -62,6 +62,8 @@ class PaymentFlowIntegrationTest {
         testClient = new InternalClient();
         testClient.setClientId(uniqueId);
         testClient.setClientName("Test Bank");
+        testClient.setEmail("test@example.com");
+        testClient.setPassword("TestPassword@123");
         testClient.setApiKey("test_api_key_integration_12345");
         testClient.setActive(true);
         testClient.setTransactionPrefix("TST");

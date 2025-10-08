@@ -29,13 +29,15 @@ public class InternalClientTest {
         client = new InternalClient();
         client.setClientId("TEST");
         client.setClientName("Test Client");
+        client.setEmail("test@example.com");
+        client.setPassword("TestPassword@123");
         client.setApiKey("test_api_key_12345678901234567890");
         client.setTransactionPrefix("TST");
         client.setAllowedEndpoints(Set.of("pacs008", "acmt023"));
         client.setActive(true);
         client.setRateLimitPerMinute(100);
         client.setDescription("Test client description");
-        client.setContactEmail("test@example.com");
+        client.setContactEmail("contact@example.com");
         client.setContactPhone("+1234567890");
         client.setCreatedBy("TEST");
         client.setUpdatedBy("TEST");
@@ -250,7 +252,7 @@ public class InternalClientTest {
     @Test
     void testEmailValidation_ValidFormat() {
         // Arrange
-        client.setContactEmail("valid@example.com");
+        client.setEmail("valid@example.com");
 
         // Act
         Set<ConstraintViolation<InternalClient>> violations = validator.validate(client);

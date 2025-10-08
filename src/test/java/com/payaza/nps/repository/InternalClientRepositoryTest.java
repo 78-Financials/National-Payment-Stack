@@ -45,13 +45,15 @@ public class InternalClientRepositoryTest {
         testClient = new InternalClient();
         testClient.setClientId("TEST");
         testClient.setClientName("Test Client");
+        testClient.setEmail("test@example.com");
+        testClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         testClient.setApiKey("test_api_key_1234567890_secure");
         testClient.setTransactionPrefix("TST");
         testClient.setAllowedEndpoints(Set.of("pacs008", "acmt023"));
         testClient.setActive(true);
         testClient.setRateLimitPerMinute(100);
         testClient.setDescription("Test client for unit testing");
-        testClient.setContactEmail("test@example.com");
+        testClient.setContactEmail("contact@example.com");
         testClient.setContactPhone("+1234567890");
         testClient.setCreatedBy("TEST");
         testClient.setUpdatedBy("TEST");
@@ -134,6 +136,8 @@ public class InternalClientRepositoryTest {
         InternalClient activeClient = new InternalClient();
         activeClient.setClientId("ACTIVE");
         activeClient.setClientName("Active Client");
+        activeClient.setEmail("active@example.com");
+        activeClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         activeClient.setApiKey("active_api_key_1234567890_secure");
         activeClient.setTransactionPrefix("ACT");
         activeClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -145,6 +149,8 @@ public class InternalClientRepositoryTest {
         InternalClient inactiveClient = new InternalClient();
         inactiveClient.setClientId("INACTIVE");
         inactiveClient.setClientName("Inactive Client");
+        inactiveClient.setEmail("inactive@example.com");
+        inactiveClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         inactiveClient.setApiKey("inactive_api_key_1234567890_secure");
         inactiveClient.setTransactionPrefix("INA");
         inactiveClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -171,6 +177,8 @@ public class InternalClientRepositoryTest {
         InternalClient activeClient = new InternalClient();
         activeClient.setClientId("ACTIVE");
         activeClient.setClientName("Active Client");
+        activeClient.setEmail("active@example.com");
+        activeClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         activeClient.setApiKey("active_api_key_1234567890_secure");
         activeClient.setTransactionPrefix("ACT");
         activeClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -182,6 +190,8 @@ public class InternalClientRepositoryTest {
         InternalClient inactiveClient = new InternalClient();
         inactiveClient.setClientId("INACTIVE");
         inactiveClient.setClientName("Inactive Client");
+        inactiveClient.setEmail("inactive@example.com");
+        inactiveClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         inactiveClient.setApiKey("inactive_api_key_1234567890_secure");
         inactiveClient.setTransactionPrefix("INA");
         inactiveClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -214,6 +224,8 @@ public class InternalClientRepositoryTest {
         InternalClient otherClient = new InternalClient();
         otherClient.setClientId("OTHER");
         otherClient.setClientName("Other Client");
+        otherClient.setEmail("other@example.com");
+        otherClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         otherClient.setApiKey("other_api_key_1234567890_secure");
         otherClient.setTransactionPrefix("OTH");
         otherClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -286,6 +298,8 @@ public class InternalClientRepositoryTest {
         InternalClient clientWithEndpoint = new InternalClient();
         clientWithEndpoint.setClientId("WITH_END");
         clientWithEndpoint.setClientName("Client With Endpoint");
+        clientWithEndpoint.setEmail("withend@example.com");
+        clientWithEndpoint.setPassword("$2a$12$encoded_password_hash_for_testing");
         clientWithEndpoint.setApiKey("with_endpoint_api_key");
         clientWithEndpoint.setTransactionPrefix("WIT");
         clientWithEndpoint.setAllowedEndpoints(Set.of("pacs008", "acmt023"));
@@ -297,6 +311,8 @@ public class InternalClientRepositoryTest {
         InternalClient clientWithoutEndpoint = new InternalClient();
         clientWithoutEndpoint.setClientId("WITHOUT_EN");
         clientWithoutEndpoint.setClientName("Client Without Endpoint");
+        clientWithoutEndpoint.setEmail("withoutend@example.com");
+        clientWithoutEndpoint.setPassword("$2a$12$encoded_password_hash_for_testing");
         clientWithoutEndpoint.setApiKey("without_endpoint_api_key");
         clientWithoutEndpoint.setTransactionPrefix("WOT");
         clientWithoutEndpoint.setAllowedEndpoints(Set.of("pacs002"));
@@ -325,6 +341,8 @@ public class InternalClientRepositoryTest {
         InternalClient recentClient = new InternalClient();
         recentClient.setClientId("RECENT");
         recentClient.setClientName("Recent Client");
+        recentClient.setEmail("recent@example.com");
+        recentClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         recentClient.setApiKey("recent_api_key_1234567890_secure");
         recentClient.setTransactionPrefix("REC");
         recentClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -338,6 +356,8 @@ public class InternalClientRepositoryTest {
         InternalClient olderClient = new InternalClient();
         olderClient.setClientId("OLDER");
         olderClient.setClientName("Older Client");
+        olderClient.setEmail("older@example.com");
+        olderClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         olderClient.setApiKey("older_api_key_1234567890_secure");
         olderClient.setTransactionPrefix("OLD");
         olderClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -374,6 +394,8 @@ public class InternalClientRepositoryTest {
         InternalClient highLimitClient = new InternalClient();
         highLimitClient.setClientId("HIGH_LIMIT");
         highLimitClient.setClientName("High Limit Client");
+        highLimitClient.setEmail("highlimit@example.com");
+        highLimitClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         highLimitClient.setApiKey("high_limit_api_key_1234567890_secure");
         highLimitClient.setTransactionPrefix("HIG");
         highLimitClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -400,6 +422,8 @@ public class InternalClientRepositoryTest {
         InternalClient activeClient = new InternalClient();
         activeClient.setClientId("ACTIVE");
         activeClient.setClientName("Active Client");
+        activeClient.setEmail("active@example.com");
+        activeClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         activeClient.setApiKey("active_api_key_1234567890_secure");
         activeClient.setTransactionPrefix("ACT");
         activeClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -411,6 +435,8 @@ public class InternalClientRepositoryTest {
         InternalClient inactiveClient = new InternalClient();
         inactiveClient.setClientId("INACTIVE");
         inactiveClient.setClientName("Inactive Client");
+        inactiveClient.setEmail("inactive@example.com");
+        inactiveClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         inactiveClient.setApiKey("inactive_api_key_1234567890_secure");
         inactiveClient.setTransactionPrefix("INA");
         inactiveClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -438,6 +464,8 @@ public class InternalClientRepositoryTest {
         InternalClient otherClient = new InternalClient();
         otherClient.setClientId("OTHER");
         otherClient.setClientName("Other Finance Client");
+        otherClient.setEmail("other@example.com");
+        otherClient.setPassword("$2a$12$encoded_password_hash_for_testing");
         otherClient.setApiKey("other_api_key_1234567890_secure");
         otherClient.setTransactionPrefix("OTH");
         otherClient.setAllowedEndpoints(Set.of("pacs008"));
@@ -464,6 +492,8 @@ public class InternalClientRepositoryTest {
         InternalClient duplicateClientId = new InternalClient();
         duplicateClientId.setClientId("TEST"); // Duplicate
         duplicateClientId.setClientName("Duplicate Client");
+        duplicateClientId.setEmail("duplicate@example.com");
+        duplicateClientId.setPassword("$2a$12$encoded_password_hash_for_testing");
         duplicateClientId.setApiKey("duplicate_api_key_1234567890_secure");
         duplicateClientId.setTransactionPrefix("DUP");
         duplicateClientId.setAllowedEndpoints(Set.of("pacs008"));

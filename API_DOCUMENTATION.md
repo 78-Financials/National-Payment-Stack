@@ -98,27 +98,63 @@ POST /payments/initiate
 }
 ```
 
-### **Check Payment Status (PACS.028)**
+### **Payment Status Report (PACS.002)**
 
 ```http
-POST /payments/status
+POST /payments/status-report
 ```
 
 **Request Body:**
 ```json
 {
-  "originalTransactionId": "TXN123456789",
-  "originalMessageId": "MSG123456789"
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "transactionId": "TXN123456789",
+  "paymentStatus": "SUCCESS",
+  "responseCode": "00",
+  "responseMessage": "Payment completed successfully",
+  "processedAt": "2024-01-01T10:35:00Z"
 }
 ```
 
 **Response:**
 ```json
 {
-  "transactionId": "TXN123456789",
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "responseCode": "00",
+  "responseMessage": "Status report processed successfully",
   "status": "SUCCESS",
-  "statusReason": "Payment completed successfully",
-  "processedAt": "2024-01-01T10:35:00Z"
+  "paymentStatus": "SUCCESS",
+  "createdAt": "2024-01-01T10:35:00Z"
+}
+```
+
+### **Payment Status Request (PACS.028)**
+
+```http
+POST /payments/status-request
+```
+
+**Request Body:**
+```json
+{
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "originalTransactionId": "TXN123456789",
+  "requestDate": "2024-01-01T10:30:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "responseCode": "00",
+  "responseMessage": "Status request processed successfully",
+  "status": "SUCCESS",
+  "createdAt": "2024-01-01T10:30:00Z"
 }
 ```
 
@@ -174,6 +210,7 @@ POST /identification/verify
 **Request Body:**
 ```json
 {
+  "messageId": "MSG123456789",
   "accountNumber": "1234567890",
   "bankCode": "044",
   "accountName": "John Doe"
@@ -184,11 +221,47 @@ POST /identification/verify
 ```json
 {
   "messageId": "MSG123456789",
+  "responseCode": "00",
+  "responseMessage": "Account verification successful",
   "status": "SUCCESS",
   "accountVerified": true,
-  "accountName": "John Doe",
+  "createdAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Identification Verification Report (ACMT.024)**
+
+```http
+POST /identification/report
+```
+
+**Request Body:**
+```json
+{
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "accountNumber": "1234567890",
   "bankCode": "044",
-  "processedAt": "2024-01-01T10:30:00Z"
+  "accountName": "John Doe",
+  "verificationStatus": "SUCCESS",
+  "accountVerified": true,
+  "responseCode": "00",
+  "responseMessage": "Account verification successful",
+  "processedAt": "2024-01-01T10:35:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "messageId": "MSG123456789",
+  "originalMessageId": "MSG987654321",
+  "responseCode": "00",
+  "responseMessage": "Verification report processed successfully",
+  "status": "SUCCESS",
+  "verificationStatus": "SUCCESS",
+  "accountVerified": true,
+  "createdAt": "2024-01-01T10:35:00Z"
 }
 ```
 
@@ -1376,6 +1449,300 @@ Authorization: Bearer {admin_token}
       "errorRate": 0.5
     }
   ]
+}
+```
+
+---
+
+## 🔗 **Integration & Webhook Management APIs (Admin Only)**
+
+### **Get Webhook Configurations**
+```http
+GET /admin/integrations/webhooks
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Payment Success Webhook",
+    "url": "https://example.com/webhook",
+    "apiKey": "webhook_api_key",
+    "eventTypes": ["PAYMENT_SUCCESS", "PAYMENT_FAILED"],
+    "isActive": true,
+    "retryAttempts": 3,
+    "timeoutSeconds": 30,
+    "description": "Webhook for payment notifications",
+    "createdAt": "2024-01-01T10:30:00Z",
+    "updatedAt": "2024-01-01T10:30:00Z"
+  }
+]
+```
+
+### **Create Webhook Configuration**
+```http
+POST /admin/integrations/webhooks
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Payment Success Webhook",
+  "url": "https://example.com/webhook",
+  "apiKey": "webhook_api_key",
+  "eventTypes": ["PAYMENT_SUCCESS", "PAYMENT_FAILED"],
+  "isActive": true,
+  "retryAttempts": 3,
+  "timeoutSeconds": 30,
+  "description": "Webhook for payment notifications"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Payment Success Webhook",
+  "url": "https://example.com/webhook",
+  "apiKey": "webhook_api_key",
+  "eventTypes": ["PAYMENT_SUCCESS", "PAYMENT_FAILED"],
+  "isActive": true,
+  "retryAttempts": 3,
+  "timeoutSeconds": 30,
+  "description": "Webhook for payment notifications",
+  "createdAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Update Webhook Configuration**
+```http
+PUT /admin/integrations/webhooks/{webhookId}
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Updated Payment Success Webhook",
+  "url": "https://example.com/webhook/updated",
+  "apiKey": "new_webhook_api_key",
+  "eventTypes": ["PAYMENT_SUCCESS", "PAYMENT_FAILED", "PAYMENT_PENDING"],
+  "isActive": true,
+  "retryAttempts": 5,
+  "timeoutSeconds": 45,
+  "description": "Updated webhook for payment notifications"
+}
+```
+
+### **Delete Webhook Configuration**
+```http
+DELETE /admin/integrations/webhooks/{webhookId}
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "message": "Webhook configuration deleted successfully",
+  "webhookId": 1,
+  "deletedAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Test Webhook Configuration**
+```http
+POST /admin/integrations/webhooks/{webhookId}/test
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "response": "OK",
+  "responseTime": 150,
+  "timestamp": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Get Rate Limit Configurations**
+```http
+GET /admin/integrations/rate-limits
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+[
+  {
+    "clientId": "BANK001",
+    "hourlyLimit": 1000,
+    "dailyLimit": 10000,
+    "burstLimit": 100,
+    "updatedAt": "2024-01-01T10:30:00Z"
+  }
+]
+```
+
+### **Update Rate Limit Configuration**
+```http
+PUT /admin/integrations/rate-limits/{clientId}
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "hourlyLimit": 1000,
+  "dailyLimit": 10000,
+  "burstLimit": 100
+}
+```
+
+**Response:**
+```json
+{
+  "clientId": "BANK001",
+  "hourlyLimit": 1000,
+  "dailyLimit": 10000,
+  "burstLimit": 100,
+  "updatedAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Get Client API Usage**
+```http
+GET /admin/integrations/rate-limits/{clientId}/usage
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "clientId": "BANK001",
+  "requestsToday": 500,
+  "requestsThisHour": 50,
+  "requestsThisMinute": 5,
+  "rateLimitRemaining": 950,
+  "lastRequest": "2024-01-01T10:30:00Z"
+}
+```
+
+---
+
+## 📡 **Inbound Subscription Management APIs (Admin Only)**
+
+### **Get Current Inbound PACS.008 Subscriber**
+```http
+GET /admin/inbound-subscriptions/pacs008/current
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "clientId": "BANK001",
+  "messageType": "PACS008",
+  "callbackUrl": "https://bank001.com/callback/pacs008",
+  "isActive": true,
+  "description": "Inbound PACS.008 subscription for BANK001",
+  "createdAt": "2024-01-01T10:30:00Z",
+  "updatedAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Set Inbound PACS.008 Subscriber**
+```http
+POST /admin/inbound-subscriptions/pacs008
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "clientId": "BANK001",
+  "messageType": "PACS008",
+  "callbackUrl": "https://bank001.com/callback/pacs008",
+  "isActive": true,
+  "description": "Inbound PACS.008 subscription for BANK001"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Inbound PACS.008 subscriber set successfully",
+  "clientId": "BANK001",
+  "messageType": "PACS008",
+  "callbackUrl": "https://bank001.com/callback/pacs008",
+  "isActive": true,
+  "createdAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Remove Inbound PACS.008 Subscriber**
+```http
+DELETE /admin/inbound-subscriptions/pacs008
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "message": "Inbound PACS.008 subscriber removed successfully",
+  "removedAt": "2024-01-01T10:30:00Z"
+}
+```
+
+### **Get Queue Status**
+```http
+GET /admin/inbound-subscriptions/queue/status
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "queueSize": 25,
+  "processingRate": 10,
+  "averageProcessingTime": 150,
+  "lastProcessed": "2024-01-01T10:30:00Z",
+  "status": "HEALTHY"
+}
+```
+
+### **Get Subscription History**
+```http
+GET /admin/inbound-subscriptions/history?page=0&size=20
+Authorization: Bearer {admin_token}
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "clientId": "BANK001",
+      "messageType": "PACS008",
+      "callbackUrl": "https://bank001.com/callback/pacs008",
+      "isActive": false,
+      "createdAt": "2024-01-01T10:30:00Z",
+      "updatedAt": "2024-01-01T11:30:00Z",
+      "deactivatedAt": "2024-01-01T11:30:00Z"
+    }
+  ],
+  "totalElements": 5,
+  "totalPages": 1,
+  "currentPage": 0,
+  "size": 20
 }
 ```
 

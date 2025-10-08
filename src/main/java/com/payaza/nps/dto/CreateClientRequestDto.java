@@ -38,8 +38,17 @@ public class CreateClientRequestDto {
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
     
+    @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     @Size(max = 100, message = "Email must not exceed 100 characters")
+    private String email;
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    private String password;
+    
+    @Email(message = "Invalid contact email format")
+    @Size(max = 100, message = "Contact email must not exceed 100 characters")
     private String contactEmail;
     
     @Size(max = 20, message = "Phone must not exceed 20 characters")
@@ -66,6 +75,12 @@ public class CreateClientRequestDto {
     
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     
     public String getContactEmail() { return contactEmail; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
