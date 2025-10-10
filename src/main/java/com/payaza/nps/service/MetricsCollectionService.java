@@ -51,20 +51,20 @@ public class MetricsCollectionService {
             logger.debug("Starting metrics collection");
             
             // Collect transaction metrics
-            MetricsDto.TransactionMetrics transactionMetrics = collectTransactionMetrics();
+//            MetricsDto.TransactionMetrics transactionMetrics = collectTransactionMetrics();
             
             // Collect system metrics
-            MetricsDto.SystemMetrics systemMetrics = collectSystemMetrics();
+//            MetricsDto.SystemMetrics systemMetrics = collectSystemMetrics();
             
             // Collect bank metrics
-            MetricsDto.BankMetrics bankMetrics = collectBankMetrics();
+//            MetricsDto.BankMetrics bankMetrics = collectBankMetrics();
             
             // Combine all metrics
-            MetricsDto.CombinedMetrics combinedMetrics = new MetricsDto.CombinedMetrics(
-                transactionMetrics, systemMetrics, bankMetrics);
+//            MetricsDto.CombinedMetrics combinedMetrics = new MetricsDto.CombinedMetrics(
+//                transactionMetrics, systemMetrics, bankMetrics);
             
             // Evaluate alert rules
-            alertEngine.evaluateRules(combinedMetrics);
+//            alertEngine.evaluateRules(combinedMetrics);
             
             logger.debug("Metrics collection completed successfully");
             

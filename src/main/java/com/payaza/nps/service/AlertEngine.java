@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -276,8 +277,9 @@ public class AlertEngine {
             
             // Set metric and threshold values
             Double metricValue = getMetricValue(extractMetricPath(rule.getConditionExpression()), metrics);
-            alert.setMetricValue(metricValue);
-            alert.setThresholdValue(extractThresholdValue(rule.getConditionExpression()));
+            alert.setMetricValue(BigDecimal.valueOf((metricValue) == null ? 0 : metricValue));
+            Double thresholdValue  = extractThresholdValue(rule.getConditionExpression());
+            alert.setThresholdValue((thresholdValue) == null ? BigDecimal.valueOf(0L) : BigDecimal.valueOf(thresholdValue));
             
             // Save alert
             Alert savedAlert = alertRepository.save(alert);

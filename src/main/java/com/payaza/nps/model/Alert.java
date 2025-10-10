@@ -8,7 +8,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Entity for storing triggered alerts
@@ -55,11 +54,11 @@ public class Alert {
     @Column(name = "channel")
     private List<String> notificationChannels;
     
-    @Column(name = "metric_value")
-    private Double metricValue; // The actual value that triggered the alert
+    @Column(name = "metric_value", precision = 19, scale = 2)
+    private java.math.BigDecimal metricValue; // The actual value that triggered the alert
     
-    @Column(name = "threshold_value")
-    private Double thresholdValue; // The threshold that was exceeded
+    @Column(name = "threshold_value", precision = 19, scale = 2)
+    private java.math.BigDecimal thresholdValue; // The threshold that was exceeded
     
     @Size(max = 100, message = "Metric name must not exceed 100 characters")
     @Column(name = "metric_name", length = 100)
@@ -138,11 +137,11 @@ public class Alert {
     public List<String> getNotificationChannels() { return notificationChannels; }
     public void setNotificationChannels(List<String> notificationChannels) { this.notificationChannels = notificationChannels; }
 
-    public Double getMetricValue() { return metricValue; }
-    public void setMetricValue(Double metricValue) { this.metricValue = metricValue; }
+    public java.math.BigDecimal getMetricValue() { return metricValue; }
+    public void setMetricValue(java.math.BigDecimal metricValue) { this.metricValue = metricValue; }
 
-    public Double getThresholdValue() { return thresholdValue; }
-    public void setThresholdValue(Double thresholdValue) { this.thresholdValue = thresholdValue; }
+    public java.math.BigDecimal getThresholdValue() { return thresholdValue; }
+    public void setThresholdValue(java.math.BigDecimal thresholdValue) { this.thresholdValue = thresholdValue; }
 
     public String getMetricName() { return metricName; }
     public void setMetricName(String metricName) { this.metricName = metricName; }

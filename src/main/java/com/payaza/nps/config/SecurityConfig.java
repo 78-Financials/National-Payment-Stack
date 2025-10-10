@@ -1,7 +1,9 @@
 package com.payaza.nps.config;
 
 import com.payaza.nps.security.UserDetailsServiceImpl;
+import com.payaza.nps.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +36,10 @@ public class SecurityConfig {
     
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    
+    @Autowired
+    @Lazy
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -50,9 +56,10 @@ public class SecurityConfig {
                 // Admin endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 
-                // Client endpoints
-                .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
-                .requestMatchers("/api/v1/identification/**").hasAnyRole("CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                // Client endpoints (admin has access to all)
+                .requestMatchers("/api/v1/payments/**").hasAnyRole("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/identification/**").hasAnyRole    ("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/alerts/**").hasAnyRole("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
                 
                 // Actuator endpoints
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
@@ -60,6 +67,7 @@ public class SecurityConfig {
                 // Allow all other requests for now (can be restricted later)
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(apiKeyAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable());

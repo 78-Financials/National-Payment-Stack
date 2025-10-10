@@ -47,9 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Set client context
                     ClientContext.setCurrentClient(client);
                     
-                    // Set security context
+                    // Set security context with proper role
+                    String role = "ROLE_" + (client.getClientType() != null ? client.getClientType() : "BANK");
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        client, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_CLIENT"))
+                        client, null, Collections.singletonList(new SimpleGrantedAuthority(role))
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
