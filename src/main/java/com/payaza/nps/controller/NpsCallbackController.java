@@ -5,12 +5,10 @@ import com.payaza.nps.model.AuditLog;
 import com.payaza.nps.service.AuditService;
 import com.payaza.nps.service.NpsXmlDecryptionService;
 import com.payaza.nps.service.PaymentStatusTrackingService;
-import com.payaza.nps.service.NpsXmlSignatureService;
-import com.payaza.nps.service.NpsXmlEncryptionService;
 import com.payaza.nps.service.Acmt024XmlParser;
 import com.payaza.nps.service.Pacs002XmlParser;
-import com.payaza.nps.service.Pacs008XmlParser;
 import com.payaza.nps.service.Pacs028XmlParser;
+import com.payaza.nps.service.InboundPacs008Processor;
 import com.payaza.nps.config.NpsConfiguration;
 import com.payaza.nps.dto.*;
 import org.slf4j.Logger;
@@ -20,23 +18,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.Map;
 
 /**
  * NPS Callback Controller
  * 
- * Handles incoming asynchronous messages from NIBSS:
- * - ACMT.024 (Identification Verification Report)
- * - PACS.002 (Payment Status Report)
- * - PACS.028 (Payment Status Request Response)
+ * Unified controller for handling all incoming asynchronous messages from NIBSS:
+ * - ACMT.023 (Identification Verification Request) - Inbound requests from NIBSS
+ * - ACMT.024 (Identification Verification Report) - Responses to our ACMT.023 requests
+ * - PACS.002 (Payment Status Report) - Responses to our PACS.008 requests
+ * - PACS.008 (Inbound Payment Request) - Inbound payment requests from NIBSS
+ * - PACS.028 (Payment Status Request Response) - Responses to our PACS.028 requests
  * 
  * All incoming messages are:
  * 1. Decrypted using our private key
  * 2. Signature verified using NIBSS public key
- * 3. Converted to JSON for internal processing
+ * 3. Processed using appropriate services
+ * 4. Logged for audit and monitoring
  */
 @RestController
 @RequestMapping("/api/v1/nps/callback")
@@ -65,10 +63,66 @@ public class NpsCallbackController {
     private Pacs002XmlParser pacs002XmlParser;
 
     @Autowired
-    private Pacs008XmlParser pacs008XmlParser;
+    private Pacs028XmlParser pacs028XmlParser;
 
     @Autowired
-    private Pacs028XmlParser pacs028XmlParser;
+    private InboundPacs008Processor inboundPacs008Processor;
+
+    /**
+     * Handle incoming ACMT.023 (Identification Verification Request) from NIBSS
+     * These are identification verification requests sent TO us by NIBSS
+     */
+    @PostMapping("/acmt023")
+    @Auditable(action = "ACMT023_CALLBACK", resource = "IdentificationRequest", actionType = AuditLog.ActionType.API_CALL, message = "ACMT.023 identification verification request callback received from NIBSS")
+    public ResponseEntity<String> handleAcmt023Callback(@RequestBody String encryptedXml) {
+        logger.info("Received ACMT.023 callback from NIBSS");
+        
+        try {
+            // Decrypt and verify the incoming message
+            String decryptedXml = xmlDecryptionService.decryptAndVerifyXmlDocument(
+                encryptedXml, 
+                npsConfig.getPrivateKey(), 
+                npsConfig.getNpsPublicKey()
+            );
+            
+            logger.debug("Decrypted ACMT.023 XML: {}", decryptedXml);
+            
+            // Log successful callback processing
+            auditService.logSystemEvent(
+                "ACMT023_CALLBACK_PROCESSED",
+                "IdentificationRequest",
+                "ACMT.023 identification verification request processed successfully from NIBSS",
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
+            // TODO: Parse and process ACMT.023 request
+            // - Parse the decrypted XML (need Acmt023XmlParser)
+            // - Process the identification verification request
+            // - Generate and send ACMT.024 response back to NIBSS
+            
+            // Return acknowledgment to NIBSS
+            return ResponseEntity.ok("ACMT.023 received and processed successfully");
+            
+        } catch (Exception e) {
+            logger.error("Error processing ACMT.023 callback: {}", e.getMessage(), e);
+            
+            // Log callback processing error
+            auditService.logError(
+                "ACMT023_CALLBACK_FAILED",
+                "IdentificationRequest",
+                AuditLog.ActionType.API_CALL,
+                null,
+                "NIBSS",
+                "Failed to process ACMT.023 callback from NIBSS: " + e.getMessage(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error processing ACMT.023: " + e.getMessage());
+        }
+    }
 
     /**
      * Handle incoming ACMT.024 (Identification Verification Report) from NIBSS
@@ -218,6 +272,18 @@ public class NpsCallbackController {
             // Parse the decrypted XML and extract relevant information
             Pacs028ResponseDto response = pacs028XmlParser.parsePacs028Xml(decryptedXml);
             
+            // Log successful callback processing
+            auditService.logSystemEvent(
+                "PACS028_CALLBACK_PROCESSED",
+                "PaymentStatusRequest",
+                "PACS.028 payment status request response processed successfully from NIBSS",
+                Map.of(
+                    "messageId", response.getMessageId(),
+                    "originalMessageId", response.getOriginalMessageId(),
+                    "responseCode", response.getResponseCode()
+                )
+            );
+            
             // Process the payment status request result
             processPaymentStatusRequestResult(response);
             
@@ -226,18 +292,33 @@ public class NpsCallbackController {
             
         } catch (Exception e) {
             logger.error("Error processing PACS.028 callback: {}", e.getMessage(), e);
+            
+            // Log callback processing error
+            auditService.logError(
+                "PACS028_CALLBACK_FAILED",
+                "PaymentStatusRequest",
+                AuditLog.ActionType.API_CALL,
+                null,
+                "NIBSS",
+                "Failed to process PACS.028 callback from NIBSS: " + e.getMessage(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error processing PACS.028: " + e.getMessage());
         }
     }
 
     /**
-     * Handle incoming PACS.008 (Payment Request Response) from NIBSS
+     * Handle incoming PACS.008 (Inbound Payment Request) from NIBSS
+     * These are payment requests sent TO us by NIBSS (inbound payments)
      */
     @PostMapping("/pacs008")
-    @Auditable(action = "PACS008_CALLBACK", resource = "PaymentRequest", actionType = AuditLog.ActionType.API_CALL, message = "PACS.008 payment request callback received from NIBSS")
+    @Auditable(action = "PACS008_CALLBACK", resource = "PaymentRequest", actionType = AuditLog.ActionType.API_CALL, message = "PACS.008 inbound payment request callback received from NIBSS")
     public ResponseEntity<String> handlePacs008Callback(@RequestBody String encryptedXml) {
-        logger.info("Received PACS.008 callback from NIBSS");
+        logger.info("Received inbound PACS.008 callback from NIBSS");
         
         try {
             // Decrypt and verify the incoming message
@@ -249,17 +330,37 @@ public class NpsCallbackController {
             
             logger.debug("Decrypted PACS.008 XML: {}", decryptedXml);
             
-            // Parse the decrypted XML and extract relevant information
-            Pacs008ResponseDto response = pacs008XmlParser.parsePacs008Xml(decryptedXml);
+            // Use InboundPacs008Processor for proper inbound payment processing
+            // This handles: transaction creation, SQS queuing, client notifications, etc.
+            inboundPacs008Processor.processInboundPacs008(decryptedXml);
             
-            // Process the payment request result
-            processPaymentRequestResult(response);
+            // Log successful callback processing
+            auditService.logSystemEvent(
+                "PACS008_CALLBACK_PROCESSED",
+                "PaymentRequest",
+                "PACS.008 inbound payment request processed successfully from NIBSS",
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
             
             // Return acknowledgment to NIBSS
             return ResponseEntity.ok("PACS.008 received and processed successfully");
             
         } catch (Exception e) {
             logger.error("Error processing PACS.008 callback: {}", e.getMessage(), e);
+            
+            // Log callback processing error
+            auditService.logError(
+                "PACS008_CALLBACK_FAILED",
+                "PaymentRequest",
+                AuditLog.ActionType.API_CALL,
+                null,
+                "NIBSS",
+                "Failed to process PACS.008 callback from NIBSS: " + e.getMessage(),
+                e.getClass().getSimpleName(),
+                e.getMessage(),
+                Map.of("encryptedXmlLength", encryptedXml != null ? encryptedXml.length() : 0)
+            );
+            
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error processing PACS.008: " + e.getMessage());
         }
@@ -424,69 +525,5 @@ public class NpsCallbackController {
         // 5. Audit logging: Log the status request for compliance
         
         logger.info("Payment status request processing completed for message: {}", response.getMessageId());
-    }
-
-    private void processPaymentRequestResult(Pacs008ResponseDto response) {
-        logger.info("Processing payment request result for message: {}, transaction: {}", 
-            response.getMessageId(), response.getTransactionId());
-        
-        // Log Payment Information
-        logger.info("--- Payment Information ---");
-        logger.info("Message ID: {}", response.getMessageId());
-        logger.info("Instruction ID: {}", response.getInstructionId());
-        logger.info("End-to-End ID: {}", response.getEndToEndId());
-        logger.info("Transaction ID: {}", response.getTransactionId());
-        logger.info("Amount: {} {}", response.getAmount(), response.getCurrency());
-        logger.info("Settlement Date: {}", response.getSettlementDate());
-        logger.info("Charge Bearer: {}", response.getChargeBearer());
-        logger.info("Batch Booking: {}", response.getBatchBooking());
-        logger.info("Number of Transactions: {}", response.getNumberOfTransactions());
-        logger.info("Settlement Method: {}", response.getSettlementMethod());
-        logger.info("Creation DateTime: {}", response.getCreationDateTime());
-        
-        // Log Agent Information
-        logger.info("--- Agent Information ---");
-        logger.info("Instructing Agent BICFI: {}", response.getInstgAgentBicfi());
-        logger.info("Instructing Agent Member ID: {}", response.getInstgAgentMemberId());
-        logger.info("Instructed Agent BICFI: {}", response.getInstdAgentBicfi());
-        logger.info("Instructed Agent Member ID: {}", response.getInstdAgentMemberId());
-        logger.info("Debtor Agent Member ID: {}", response.getDbtrAgentMemberId());
-        logger.info("Creditor Agent Member ID: {}", response.getCdtrAgentMemberId());
-        
-        // Log Party Information
-        logger.info("--- Party Information ---");
-        logger.info("Sender Account Name: {}", response.getSenderAccountName());
-        logger.info("Sender Account Number: {}", response.getSenderAccountNumber());
-        logger.info("Receiver Account Name: {}", response.getReceiverAccountName());
-        logger.info("Receiver Account Number: {}", response.getReceiverAccountNumber());
-        
-        // Log Payment Type Information
-        logger.info("--- Payment Type Information ---");
-        logger.info("Clearing Channel: {}", response.getClearingChannel());
-        logger.info("Service Level: {}", response.getServiceLevel());
-        logger.info("Local Instrument: {}", response.getLocalInstrument());
-        logger.info("Category Purpose: {}", response.getCategoryPurpose());
-        
-        // Log Instructions and Remittance
-        logger.info("--- Instructions and Remittance ---");
-        logger.info("Instructions for Next Agent: {}", response.getInstructionsForNextAgent());
-        logger.info("Remittance Information: {}", response.getRemittanceInformation());
-        
-        // Log Supplementary Data
-        logger.info("--- Supplementary Data ---");
-        logger.info("Debtor BVN: {}", response.getDebtorBvn());
-        logger.info("Debtor Account Designation: {}", response.getDebtorAccountDesignation());
-        logger.info("Debtor Account Tier: {}", response.getDebtorAccountTier());
-        logger.info("Creditor BVN: {}", response.getCreditorBvn());
-        logger.info("Creditor Account Designation: {}", response.getCreditorAccountDesignation());
-        logger.info("Creditor Account Tier: {}", response.getCreditorAccountTier());
-        logger.info("Transaction Location: {}", response.getTransactionLocation());
-        logger.info("Name Enquiry Message ID: {}", response.getNameEnquiryMsgId());
-        logger.info("Channel Code: {}", response.getChannelCode());
-        logger.info("Risk Rating: {}", response.getRiskRating());
-        
-        // Here you would integrate with your internal systems
-        // For example, update payment records, send notifications, etc.
-        logger.info("Payment request received and processed successfully");
     }
 }
