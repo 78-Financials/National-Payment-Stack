@@ -1,6 +1,7 @@
 package com.payaza.nps.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -21,7 +22,8 @@ import java.util.HashSet;
        uniqueConstraints = {
            @UniqueConstraint(columnNames = "client_id"),
            @UniqueConstraint(columnNames = "api_key"),
-           @UniqueConstraint(columnNames = "transaction_prefix")
+           @UniqueConstraint(columnNames = "transaction_prefix"),
+           @UniqueConstraint(columnNames = "email")
        })
 public class InternalClient {
     
@@ -63,12 +65,16 @@ public class InternalClient {
     @Column(name = "rate_limit_per_minute", nullable = false)
     private Integer rateLimitPerMinute = 100;
     
+    @Size(max = 500, message = "Description must not exceed 500 characters")
     @Column(name = "description", length = 500)
     private String description;
     
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Contact email must not exceed 100 characters")
     @Column(name = "contact_email", length = 100)
     private String contactEmail;
     
+    @Size(max = 20, message = "Contact phone must not exceed 20 characters")
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
     
@@ -88,6 +94,38 @@ public class InternalClient {
     
     @Column(name = "updated_by", length = 50)
     private String updatedBy = "SYSTEM";
+    
+    @Column(name = "client_type", length = 20)
+    private String clientType = "BANK";
+    
+    @Column(name = "last_activity")
+    private LocalDateTime lastActivity;
+    
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
+    @Column(name = "email", unique = true, nullable = false, length = 100)
+    private String email;
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Column(name = "password", nullable = false)
+    private String password;
+    
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+    
+    @Column(name = "login_attempts", nullable = false)
+    private Integer loginAttempts = 0;
+    
+    @Column(name = "account_locked", nullable = false)
+    private Boolean accountLocked = false;
+    
+    @Column(name = "password_reset_token", length = 100)
+    private String passwordResetToken;
+    
+    @Column(name = "password_reset_expires")
+    private LocalDateTime passwordResetExpires;
 
     // Constructors
     public InternalClient() {}
@@ -127,6 +165,9 @@ public class InternalClient {
 
     public Integer getRateLimitPerMinute() { return rateLimitPerMinute; }
     public void setRateLimitPerMinute(Integer rateLimitPerMinute) { this.rateLimitPerMinute = rateLimitPerMinute; }
+    
+    // Convenience method for tests
+    public void setRateLimit(int rateLimit) { this.rateLimitPerMinute = rateLimit; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -151,10 +192,58 @@ public class InternalClient {
 
     public String getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(String updatedBy) { this.updatedBy = updatedBy; }
-
-    // Utility methods
+    
+    public String getClientType() { return clientType; }
+    public void setClientType(String clientType) { this.clientType = clientType; }
+    
+    public LocalDateTime getLastActivity() { return lastActivity; }
+    public void setLastActivity(LocalDateTime lastActivity) { this.lastActivity = lastActivity; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    
+    public LocalDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+    
+    public Integer getLoginAttempts() { return loginAttempts; }
+    public void setLoginAttempts(Integer loginAttempts) { this.loginAttempts = loginAttempts; }
+    
+    public Boolean getAccountLocked() { return accountLocked; }
+    public void setAccountLocked(Boolean accountLocked) { this.accountLocked = accountLocked; }
+    
+    public String getPasswordResetToken() { return passwordResetToken; }
+    public void setPasswordResetToken(String passwordResetToken) { this.passwordResetToken = passwordResetToken; }
+    
+    public LocalDateTime getPasswordResetExpires() { return passwordResetExpires; }
+    public void setPasswordResetExpires(LocalDateTime passwordResetExpires) { this.passwordResetExpires = passwordResetExpires; }
+    
+    // Helper methods
     public boolean isActive() { 
         return active != null && active; 
+    }
+    
+    public boolean isAccountLocked() {
+        return accountLocked != null && accountLocked;
+    }
+    
+    public void incrementLoginAttempts() {
+        this.loginAttempts = (this.loginAttempts != null ? this.loginAttempts : 0) + 1;
+    }
+    
+    public void resetLoginAttempts() {
+        this.loginAttempts = 0;
+    }
+    
+    public void lockAccount() {
+        this.accountLocked = true;
+    }
+    
+    public void unlockAccount() {
+        this.accountLocked = false;
+        this.loginAttempts = 0;
     }
 
     public void addAllowedEndpoint(String endpoint) {
@@ -171,7 +260,7 @@ public class InternalClient {
     }
 
     public boolean hasEndpointAccess(String endpoint) {
-        return this.allowedEndpoints != null && this.allowedEndpoints.contains(endpoint);
+        return this.allowedEndpoints != null && endpoint != null && this.allowedEndpoints.contains(endpoint);
     }
 
     public boolean hasPermission(String endpoint) {

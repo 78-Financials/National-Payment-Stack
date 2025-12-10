@@ -60,7 +60,7 @@ public class Acmt023Controller {
                     "accountNumber", request.getAccountNumber(),
                     "bankCode", request.getBankCode(),
                     "status", response.getStatus(),
-                    "verified", response.isAccountVerified()
+                    "verified", response.getAccountVerified()
                 )
             );
             

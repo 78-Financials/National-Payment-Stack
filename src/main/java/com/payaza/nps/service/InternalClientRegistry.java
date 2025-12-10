@@ -33,6 +33,9 @@ public class InternalClientRegistry {
 
     @Autowired
     private ApiKeyGenerationService apiKeyGenerationService;
+    
+    @Autowired
+    private PasswordService passwordService;
 
     // Cache for clients (API key -> Client)
     private final Map<String, InternalClient> clientsByApiKey = new HashMap<>();
@@ -45,8 +48,14 @@ public class InternalClientRegistry {
     @Value("${admin.default-client-name:System Administrator}")
     private String defaultAdminClientName;
     
-    @Value("${admin.default-api-key:admin_api_key_99999}")
+    @Value("${admin.default-api-key:admin_api_key_99999_secure_default}")
     private String defaultAdminApiKey;
+    
+    @Value("${admin.default-email:admin@nps.payaza.com}")
+    private String defaultAdminEmail;
+    
+    @Value("${admin.default-password:Admin@123456}")
+    private String defaultAdminPassword;
     
     @Value("${admin.default-transaction-prefix:ADM}")
     private String defaultAdminTransactionPrefix;
@@ -91,12 +100,17 @@ public class InternalClientRegistry {
                 InternalClient adminClient = new InternalClient();
                 adminClient.setClientId(defaultAdminClientId);
                 adminClient.setClientName(defaultAdminClientName);
+                adminClient.setEmail(defaultAdminEmail);
+                adminClient.setPassword(passwordService.encodePassword(defaultAdminPassword));
                 adminClient.setApiKey(defaultAdminApiKey);
                 adminClient.setTransactionPrefix(defaultAdminTransactionPrefix);
                 adminClient.setAllowedEndpoints(defaultAdminAllowedEndpoints);
                 adminClient.setActive(defaultAdminActive);
                 adminClient.setRateLimitPerMinute(defaultAdminRateLimitPerMinute);
                 adminClient.setDescription("Default system administrator client");
+                adminClient.setContactEmail("admin@nps.payaza.com");
+                adminClient.setContactPhone("+234-800-000-0000");
+                adminClient.setClientType("ADMIN");
                 adminClient.setCreatedBy("SYSTEM");
                 adminClient.setUpdatedBy("SYSTEM");
                 
@@ -277,5 +291,45 @@ public class InternalClientRegistry {
         stats.put("clientIds", clientsById.keySet());
         stats.put("lastRefresh", LocalDateTime.now().toString());
         return stats;
+    }
+    
+    /**
+     * Get client by ID
+     */
+    public InternalClient getClientById(String clientId) {
+        return clientsById.get(clientId);
+    }
+    
+    /**
+     * Check if client is active
+     */
+    public boolean isClientActive(String clientId) {
+        InternalClient client = clientsById.get(clientId);
+        return client != null && client.isActive();
+    }
+    
+    /**
+     * Update client in database and cache
+     */
+    public void updateClient(InternalClient client) {
+        if (client != null) {
+            clientRepository.save(client);
+            updateClientInCache(client);
+            logger.info("Updated client: {}", client.getClientId());
+        }
+    }
+    
+    /**
+     * Get client by contact email
+     */
+    public InternalClient getClientByEmail(String email) {
+        return clientRepository.findByContactEmail(email).orElse(null);
+    }
+    
+    /**
+     * Get client by reset token
+     */
+    public InternalClient getClientByResetToken(String resetToken) {
+        return clientRepository.findByPasswordResetToken(resetToken).orElse(null);
     }
 }

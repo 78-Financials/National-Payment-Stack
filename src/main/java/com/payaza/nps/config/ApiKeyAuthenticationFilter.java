@@ -39,14 +39,32 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         String apiKey = request.getHeader(API_KEY_HEADER);
         
         if (apiKey != null) {
+            logger.debug("Looking up client for API key: {}", apiKey);
             InternalClient client = clientRegistry.getClientByApiKey(apiKey);
+            logger.debug("Client lookup result: {}", client != null ? client.getClientId() : "null");
             
             if (client != null && client.isActive()) {
                 // Set client context for the current request
                 ClientContext.setCurrentClient(client);
                 
-                // Create authentication token with client-specific authority
-                String authority = "ROLE_CLIENT_" + client.getClientId();
+                // Create authentication token with client-type-based authority
+                String clientType = client.getClientType() != null ? client.getClientType() : "BANK";
+                // Map client types to the expected role names
+                String authority;
+                switch (clientType.toUpperCase()) {
+                    case "BANK":
+                        authority = "ROLE_CLIENT_BANK";
+                        break;
+                    case "FIN":
+                        authority = "ROLE_CLIENT_FIN";
+                        break;
+                    case "PAY":
+                        authority = "ROLE_CLIENT_PAY";
+                        break;
+                    default:
+                        authority = "ROLE_CLIENT_BANK"; // Default to BANK role
+                        break;
+                }
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     client.getClientId(), 
                     null, 
@@ -54,7 +72,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                 );
                 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                logger.debug("Client authentication successful: {} ({})", client.getClientId(), client.getClientName());
+                logger.debug("Client authentication successful: {} ({}) with authority: {}", client.getClientId(), client.getClientName(), authority);
             } else if (client != null) {
                 logger.warn("Client {} is inactive", client.getClientId());
                 ClientContext.clear();

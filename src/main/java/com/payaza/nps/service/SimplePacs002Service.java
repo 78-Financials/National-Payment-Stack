@@ -24,6 +24,9 @@ public class SimplePacs002Service {
     @Autowired
     private NpsXmlEncryptionService xmlEncryptionService;
 
+    @Autowired
+    private SharedAlertService sharedAlertService;
+
     public Pacs002ResponseDto processPaymentStatusReport(Pacs002RequestDto request) throws Exception {
         logger.info("Processing PACS.002 payment status report for message: {}", request.getMessageId());
 
@@ -50,6 +53,10 @@ public class SimplePacs002Service {
 
         } catch (Exception e) {
             logger.error("Error processing PACS.002 payment status report: {}", e.getMessage(), e);
+            
+            // Trigger critical alert for processing failure
+            sharedAlertService.triggerCriticalAlert("PACS002", request.getMessageId(), e.getMessage());
+            
             throw new Exception("Failed to process payment status report: " + e.getMessage(), e);
         }
     }

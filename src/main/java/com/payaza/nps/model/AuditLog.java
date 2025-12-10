@@ -147,6 +147,13 @@ public class AuditLog {
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 
+    public void setRequestInfo(Map<String, Object> requestInfo) {
+        // Convert Map to JSON string for storage
+        if (requestInfo != null && !requestInfo.isEmpty()) {
+            this.details = requestInfo.toString(); // Simple conversion, can be enhanced with JSON library
+        }
+    }
+
     public Long getExecutionTimeMs() { return executionTimeMs; }
     public void setExecutionTimeMs(Long executionTimeMs) { this.executionTimeMs = executionTimeMs; }
 

@@ -27,6 +27,9 @@ public class InternalClientRegistryTest {
     @Mock
     private ApiKeyGenerationService apiKeyGenerationService;
 
+    @Mock
+    private PasswordService passwordService;
+
     @InjectMocks
     private InternalClientRegistry clientRegistry;
 
@@ -34,10 +37,38 @@ public class InternalClientRegistryTest {
 
     @BeforeEach
     void setUp() {
+        // Initialize the service fields manually since @Value annotations don't work in unit tests
+        try {
+            java.lang.reflect.Field defaultAdminClientIdField = InternalClientRegistry.class.getDeclaredField("defaultAdminClientId");
+            defaultAdminClientIdField.setAccessible(true);
+            defaultAdminClientIdField.set(clientRegistry, "ADMIN");
+            
+            java.lang.reflect.Field defaultAdminClientNameField = InternalClientRegistry.class.getDeclaredField("defaultAdminClientName");
+            defaultAdminClientNameField.setAccessible(true);
+            defaultAdminClientNameField.set(clientRegistry, "System Administrator");
+            
+            java.lang.reflect.Field defaultAdminApiKeyField = InternalClientRegistry.class.getDeclaredField("defaultAdminApiKey");
+            defaultAdminApiKeyField.setAccessible(true);
+            defaultAdminApiKeyField.set(clientRegistry, "admin_api_key_99999_secure_default");
+            
+            java.lang.reflect.Field defaultAdminEmailField = InternalClientRegistry.class.getDeclaredField("defaultAdminEmail");
+            defaultAdminEmailField.setAccessible(true);
+            defaultAdminEmailField.set(clientRegistry, "admin@nps.payaza.com");
+            
+            java.lang.reflect.Field defaultAdminPasswordField = InternalClientRegistry.class.getDeclaredField("defaultAdminPassword");
+            defaultAdminPasswordField.setAccessible(true);
+            defaultAdminPasswordField.set(clientRegistry, "Admin@123456");
+        } catch (Exception e) {
+            // If reflection fails, the tests will fail with null pointer exceptions
+            // which is better than silent failures
+        }
+        
         testClient = new InternalClient();
         testClient.setId(1L);
         testClient.setClientId("TEST");
         testClient.setClientName("Test Client");
+        testClient.setEmail("test@example.com");
+        testClient.setPassword("encoded_password");
         testClient.setApiKey("test_api_key_123");
         testClient.setTransactionPrefix("TST");
         testClient.setAllowedEndpoints(Set.of("pacs008", "acmt023"));
@@ -319,7 +350,7 @@ public class InternalClientRegistryTest {
 
         // Assert
         assertNotNull(result);
-        verify(clientRepository, atLeastOnce()).updateLastAccessedAt("TEST", any(LocalDateTime.class));
+        verify(clientRepository, atLeastOnce()).updateLastAccessedAt(eq("TEST"), any(LocalDateTime.class));
     }
 
     @Test
@@ -382,7 +413,7 @@ public class InternalClientRegistryTest {
         InternalClient adminClient = new InternalClient();
         adminClient.setClientId("ADMIN");
         adminClient.setClientName("System Administrator");
-        adminClient.setApiKey("admin_api_key_99999");
+        adminClient.setApiKey("admin_api_key_99999_secure_default");
         adminClient.setTransactionPrefix("ADM");
         adminClient.setAllowedEndpoints(Set.of("pacs008", "acmt023", "acmt024", "pacs002", "pacs028"));
         adminClient.setActive(true);
@@ -396,7 +427,7 @@ public class InternalClientRegistryTest {
 
         // Assert
         verify(clientRepository).existsByClientId("ADMIN");
-        assertTrue(clientRegistry.clientExists("admin_api_key_99999"));
+        assertTrue(clientRegistry.clientExists("admin_api_key_99999_secure_default"));
         assertTrue(clientRegistry.clientExistsByClientId("ADMIN"));
     }
 }

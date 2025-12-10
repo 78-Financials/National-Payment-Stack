@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
@@ -26,8 +27,12 @@ import org.w3c.dom.NodeList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = NigerianPaymentStackApplication.class)
+@SpringBootTest(classes = {
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
 @ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class Acmt024ValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(Acmt024ValidationTest.class);

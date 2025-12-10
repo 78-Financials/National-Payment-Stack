@@ -1,13 +1,23 @@
 package com.payaza.nps.config;
 
+import com.payaza.nps.security.UserDetailsServiceImpl;
+import com.payaza.nps.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,6 +33,14 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+    
+    @Autowired
+    @Lazy
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -33,13 +51,15 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/v1/payments/health").permitAll()
                 .requestMatchers("/api/v1/nps/**").permitAll() // NIBSS callbacks
+                .requestMatchers("/api/v1/auth/**").permitAll() // Auth endpoints
                 
                 // Admin endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 
-                // Client endpoints
-                .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
-                .requestMatchers("/api/v1/identification/**").hasAnyRole("CLIENT_BAN", "CLIENT_FIN", "CLIENT_PAY")
+                // Client endpoints (admin has access to all)
+                .requestMatchers("/api/v1/payments/**").hasAnyRole("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/identification/**").hasAnyRole    ("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
+                .requestMatchers("/api/v1/alerts/**").hasAnyRole("ADMIN", "CLIENT_BANK", "CLIENT_FIN", "CLIENT_PAY")
                 
                 // Actuator endpoints
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
@@ -47,6 +67,8 @@ public class SecurityConfig {
                 // Allow all other requests for now (can be restricted later)
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(apiKeyAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(formLogin -> formLogin.disable());
 
@@ -65,5 +87,28 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+    
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+    
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+    
+    @Bean
+    public ApiKeyAuthenticationFilter apiKeyAuthenticationFilter() {
+        return new ApiKeyAuthenticationFilter();
     }
 }

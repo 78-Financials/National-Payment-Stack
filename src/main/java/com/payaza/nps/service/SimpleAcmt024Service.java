@@ -24,6 +24,9 @@ public class SimpleAcmt024Service {
     @Autowired
     private NpsXmlEncryptionService xmlEncryptionService;
 
+    @Autowired
+    private SharedAlertService sharedAlertService;
+
     public Acmt024ResponseDto processIdentificationVerificationReport(Acmt024RequestDto request) throws Exception {
         logger.info("Processing ACMT.024 identification verification report for message: {}", request.getMessageId());
 
@@ -56,6 +59,10 @@ public class SimpleAcmt024Service {
 
         } catch (Exception e) {
             logger.error("Error processing ACMT.024 identification verification report: {}", e.getMessage(), e);
+            
+            // Trigger critical alert for processing failure
+            sharedAlertService.triggerCriticalAlert("ACMT024", request.getMessageId(), e.getMessage());
+            
             throw new Exception("Failed to process identification verification report: " + e.getMessage(), e);
         }
     }

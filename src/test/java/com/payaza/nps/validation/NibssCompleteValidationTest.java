@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -23,7 +25,12 @@ import java.security.PublicKey;
  * 4. Decrypt the encrypted XML
  * 5. Verify the signature on the decrypted XML
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
+@ActiveProfiles("test")
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class NibssCompleteValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(NibssCompleteValidationTest.class);

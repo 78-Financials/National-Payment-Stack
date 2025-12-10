@@ -31,6 +31,9 @@ public class SimpleAcmt023Service {
     @Autowired
     private NpsApiService npsApiService;
 
+    @Autowired
+    private SharedAlertService sharedAlertService;
+
     public Acmt023ResponseDto processIdentificationVerification(Acmt023RequestDto request) throws Exception {
         logger.info("Processing ACMT.023 identification verification for message: {}", request.getMessageId());
 
@@ -63,6 +66,10 @@ public class SimpleAcmt023Service {
 
         } catch (Exception e) {
             logger.error("Error processing ACMT.023 identification verification: {}", e.getMessage(), e);
+            
+            // Trigger critical alert for processing failure
+            sharedAlertService.triggerCriticalAlert("ACMT023", request.getMessageId(), e.getMessage());
+            
             throw new Exception("Failed to process identification verification: " + e.getMessage(), e);
         }
     }

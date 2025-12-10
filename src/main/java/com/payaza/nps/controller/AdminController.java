@@ -7,6 +7,7 @@ import com.payaza.nps.model.InternalClient;
 import com.payaza.nps.repository.InternalClientRepository;
 import com.payaza.nps.service.ApiKeyGenerationService;
 import com.payaza.nps.service.AuditService;
+import com.payaza.nps.service.PasswordService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Admin REST Controller for Internal Client Management
@@ -46,6 +45,9 @@ public class AdminController {
 
     @Autowired
     private AuditService auditService;
+    
+    @Autowired
+    private PasswordService passwordService;
 
     /**
      * Create a new internal client
@@ -71,6 +73,14 @@ public class AdminController {
                 return ResponseEntity.badRequest()
                     .body(new ErrorResponse("Transaction prefix '" + request.getTransactionPrefix() + "' already exists"));
             }
+            
+            // Check if email already exists
+            if (clientRepository.existsByEmail(request.getEmail())) {
+                auditService.logFailure("CREATE_CLIENT", "InternalClient", AuditLog.ActionType.CREATE, 
+                                      "ADMIN", null, "Email already exists", "DUPLICATE_EMAIL", request);
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Email '" + request.getEmail() + "' already exists"));
+            }
 
             // Generate API key
             String apiKey = apiKeyGenerationService.generateClientApiKey(request.getClientId());
@@ -80,10 +90,20 @@ public class AdminController {
                 apiKey = apiKeyGenerationService.generateClientApiKey(request.getClientId());
             }
 
+            // Validate password strength
+            if (!passwordService.isPasswordStrong(request.getPassword())) {
+                auditService.logFailure("CREATE_CLIENT", "InternalClient", AuditLog.ActionType.CREATE, 
+                                      "ADMIN", null, "Password does not meet strength requirements", "WEAK_PASSWORD", request);
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Password does not meet strength requirements"));
+            }
+            
             // Create new client
             InternalClient client = new InternalClient();
             client.setClientId(request.getClientId().toUpperCase());
             client.setClientName(request.getClientName());
+            client.setEmail(request.getEmail().toLowerCase());
+            client.setPassword(passwordService.encodePassword(request.getPassword()));
             client.setApiKey(apiKey);
             client.setTransactionPrefix(request.getTransactionPrefix().toUpperCase());
             client.setAllowedEndpoints(request.getAllowedEndpoints());

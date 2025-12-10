@@ -12,6 +12,9 @@ public class Acmt024ResponseDto {
     @JsonProperty("messageId")
     private String messageId;
 
+    @JsonProperty("transactionId")
+    private String transactionId;
+
     @JsonProperty("originalMessageId")
     private String originalMessageId;
 
@@ -67,6 +70,9 @@ public class Acmt024ResponseDto {
     // Getters and Setters
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }
+
+    public String getTransactionId() { return transactionId; }
+    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 
     public String getOriginalMessageId() { return originalMessageId; }
     public void setOriginalMessageId(String originalMessageId) { this.originalMessageId = originalMessageId; }

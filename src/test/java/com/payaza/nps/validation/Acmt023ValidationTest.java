@@ -10,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyPair;
@@ -22,9 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Validation test for acmt.023 Identification Verification Request message
  * Tests XML signature and encryption with the exact structure provided by NIBSS
  */
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.payaza.nps.service.NpsXmlSignatureService.class,
+    com.payaza.nps.service.NpsXmlEncryptionService.class
+})
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
+@Import(com.payaza.nps.config.TestApplicationConfig.class)
 public class Acmt023ValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(Acmt023ValidationTest.class);
